@@ -1,16 +1,8 @@
 from __future__ import annotations
 
-import re
 from io import BytesIO, StringIO
 from googletrans import Translator
-
-
-TITLE_REGEX = re.compile(r'(?<=\btitle: )\"(?:[^"\\]|\\.)*\"', flags=re.MULTILINE)
-SUBTITLE_REGEX = re.compile(r'(?<=\bsubtitle: )\"(?:[^"\\]|\\.)*\"', flags=re.MULTILINE)
-DESC_REGEX = re.compile(r'(?<=\bdescription: )\[[\s\S.]*?\]\s', flags=re.MULTILINE)
-STRING_REGEX = re.compile(r'(?<=\")(?:(?=\\?)\\?.)*?(?=\")', flags=re.MULTILINE)
-
-MODPACK_NAME = "atm9"
+from constants import MINECRAFT_TO_GOOGLE, TITLE_REGEX, SUBTITLE_REGEX, DESC_REGEX, STRING_REGEX
 
 class QuestLang:
     lang: str
@@ -25,13 +17,14 @@ class QuestLang:
     def update(self, key: str, value: str) -> None:
         self.json[key] = value
     
-    def translate(self, target: QuestLang) -> dict:
+    def translate(self, target: QuestLang) -> None:
+        if not target.json:
+            target.json = self.json.copy()
         if target.lang != self.lang:
             for k, v in self.json.items():
                 if v.startswith("[ ") and v.endswith(" ]"):
                     continue
-                self.json[k] = self.translator.translate(v, dest=target).text
-        return self.json
+                target.json[k] = self.translator.translate(v, dest=MINECRAFT_TO_GOOGLE[target.lang]).text
     
 class QuestSNBT:
     snbt: str
@@ -43,7 +36,7 @@ class QuestSNBT:
         self.modpack = modpack
         self.chapter = chapter
     
-    def convert(self, lang: QuestLang) -> tuple[str, dict]:
+    def convert(self, lang: QuestLang) -> None:
         def filter_string(string: str) -> bool:
             if not string:
                 return False
@@ -74,7 +67,7 @@ class QuestLocalizer:
         self.src_lang = QuestLang(src)
         self.dest_lang = QuestLang(dest)
         self.modpack = modpack
-        self.quests = [QuestSNBT(StringIO(quest.getvalue().decode("utf-8")).read(), quest.name[:-5], self.modpack) for quest in quests]
+        self.quests = [QuestSNBT(StringIO(quest.getvalue().decode("utf-8")).read(), self.modpack, quest.name[:-5]) for quest in quests]
     
     def convert_quests(self) -> None:
         for quest in self.quests:
@@ -84,5 +77,6 @@ class QuestLocalizer:
         self.src_lang.translate(self.dest_lang)
 
 if __name__ == "__main__":
-    localizer = QuestLocalizer("en_us", "ko_kr", MODPACK_NAME)
-    localizer.convert_quests(data=None)
+    localizer = QuestLocalizer(None, "en_us", "ko_kr", "atm9")
+    localizer.convert_quests()
+    localizer.translate_quests()

@@ -1,6 +1,15 @@
+import json
+from io import BytesIO
 import streamlit as st
+import streamlit_ext as ste
 from localizer import QuestLocalizer
-from googletrans.constants import LANGUAGES
+from constants import MINECRAFT_LANGUAGES
+
+if 'localize' not in st.session_state:
+    st.session_state.localize = False
+
+def localize_button():
+    st.session_state.localize = True
 
 st.set_page_config(
     page_title="FTB Quests Localization Tool",
@@ -21,7 +30,7 @@ st.set_page_config(
 st.title("FTB Quests Localization Tool")
 
 uploaded_files = st.file_uploader(
-    label = "Upload your FTB Quest file(.snbt) here.",
+    label = "Upload your FTB Quest file(s) here.",
     type = ["snbt"],
     accept_multiple_files = True,
     help = "You can upload multiple files at once."
@@ -29,14 +38,36 @@ uploaded_files = st.file_uploader(
     
 src = st.selectbox(
     label = "Select the source language.",
-    options = ["English", "Korean"]
+    options = MINECRAFT_LANGUAGES,
+    format_func = lambda x: f"{x} ({MINECRAFT_LANGUAGES[x]})"
 )
 
 dest = st.selectbox(
     label = "Select the destination language.",
-    options = ["English", "Korean"]
+    options = MINECRAFT_LANGUAGES,
+    format_func = lambda x: f"{x} ({MINECRAFT_LANGUAGES[x]})"
 )
 
-localizer = QuestLocalizer(uploaded_files, "en_us", "ko_kr", "atm9")
-localizer.convert_quests()
-st.json(localizer.src_lang.json)
+localizer = QuestLocalizer(uploaded_files, src, dest, "atm_9")
+st.button(
+    label = "Start localization",
+    help = "Click this button to start localization.",
+    on_click = localize_button
+)
+
+if st.session_state.localize:
+    localizer.convert_quests()
+    localizer.translate_quests()
+
+    ste.download_button(
+        label = f"Download {src}.json",
+        data = BytesIO(json.dumps(localizer.src_lang.json, indent=4, ensure_ascii=False).encode("utf-8")),
+        file_name = f"{src}.json",
+        mime = "application/octet-stream"
+    )
+    ste.download_button(
+        label = f"Download {dest}.json",
+        data = BytesIO(json.dumps(localizer.dest_lang.json, indent=4, ensure_ascii=False).encode("utf-8")),
+        file_name = f"{dest}.json",
+        mime = "application/octet-stream"
+    )
