@@ -1,7 +1,8 @@
-import json
-from io import BytesIO
+import tempfile
 import streamlit as st
 import streamlit_ext as ste
+
+from io import BytesIO
 from localizer import QuestLocalizer
 from constants import MINECRAFT_LANGUAGES
 
@@ -49,6 +50,7 @@ dest = st.selectbox(
 )
 
 localizer = QuestLocalizer(uploaded_files, src, dest, "atm_9")
+
 st.button(
     label = "Start localization",
     help = "Click this button to start localization.",
@@ -58,16 +60,25 @@ st.button(
 if st.session_state.localize:
     localizer.convert_quests()
     localizer.translate_quests()
-
+    
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        zip_dir = localizer.compress_quests(tmp_dir)
+        ste.download_button(
+            label = f"Download quests.zip",
+            data = BytesIO(open(zip_dir, "rb").read()),
+            file_name = "quests.zip",
+            mime = "application/octet-stream"
+        )
+        
     ste.download_button(
         label = f"Download {src}.json",
-        data = BytesIO(json.dumps(localizer.src_lang.json, indent=4, ensure_ascii=False).encode("utf-8")),
+        data = BytesIO(localizer.get_src_json().encode("utf-8")),
         file_name = f"{src}.json",
         mime = "application/octet-stream"
     )
     ste.download_button(
         label = f"Download {dest}.json",
-        data = BytesIO(json.dumps(localizer.dest_lang.json, indent=4, ensure_ascii=False).encode("utf-8")),
+        data = BytesIO(localizer.get_dest_json().encode("utf-8")),
         file_name = f"{dest}.json",
         mime = "application/octet-stream"
     )

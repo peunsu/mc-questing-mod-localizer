@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import os
+import json
+import zipfile
 from io import BytesIO, StringIO
 from googletrans import Translator
 from constants import MINECRAFT_TO_GOOGLE, TITLE_REGEX, SUBTITLE_REGEX, DESC_REGEX, STRING_REGEX
@@ -75,6 +78,19 @@ class QuestLocalizer:
     
     def translate_quests(self) -> None:
         self.src_lang.translate(self.dest_lang)
+    
+    def compress_quests(self, dir: str) -> str:
+        zip_dir = os.path.join(dir, 'quests.zip')
+        with zipfile.ZipFile(zip_dir, 'w') as zip_obj:
+            for quest in self.quests:
+                zip_obj.writestr(f"{quest.chapter}.snbt", quest.snbt)
+        return zip_dir
+    
+    def get_src_json(self) -> str:
+        return json.dumps(self.src_lang.json, indent=4, ensure_ascii=False)
+
+    def get_dest_json(self) -> str:
+        return json.dumps(self.dest_lang.json, indent=4, ensure_ascii=False)
 
 if __name__ == "__main__":
     localizer = QuestLocalizer(None, "en_us", "ko_kr", "atm9")
