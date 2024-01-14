@@ -3,9 +3,12 @@ from __future__ import annotations
 import os
 import json
 import zipfile
+
+from time import sleep
 from io import BytesIO, StringIO
 from googletrans import Translator
-from constants import MINECRAFT_TO_GOOGLE, TITLE_REGEX, SUBTITLE_REGEX, DESC_REGEX, STRING_REGEX
+from streamlit.delta_generator import DeltaGenerator
+from constants import MINECRAFT_TO_GOOGLE, TITLE_REGEX, SUBTITLE_REGEX, DESC_REGEX, STRING_REGEX, MAX_RETRY
 
 class QuestLang:
     lang: str
@@ -20,14 +23,26 @@ class QuestLang:
     def update(self, key: str, value: str) -> None:
         self.json[key] = value
     
-    def translate(self, target: QuestLang) -> None:
+    def translate(self, target: QuestLang, pbar: DeltaGenerator, pbar_text: str) -> None:
         if not target.json:
             target.json = self.json.copy()
         if target.lang != self.lang:
-            for k, v in self.json.items():
+            for idx, (k, v) in enumerate(self.json.items()):
                 if v.startswith("[ ") and v.endswith(" ]"):
                     continue
-                target.json[k] = self.translator.translate(v, dest=MINECRAFT_TO_GOOGLE[target.lang]).text
+                retry_count = 0
+                while True:
+                    try:
+                        target.json[k] = self.translator.translate(v, dest=MINECRAFT_TO_GOOGLE[target.lang]).text
+                        break
+                    except Exception as e:
+                        retry_count += 1
+                        if retry_count == MAX_RETRY:
+                            raise e
+                        sleep(5)
+                progress = (idx + 1) / len(self.json)
+                pbar.progress(progress, text=pbar_text.format(progress=f"{progress * 100:.2f}%"))
+        pbar.progress(1.0, text="Successfully translated!")
     
 class QuestSNBT:
     snbt: str
@@ -72,15 +87,18 @@ class QuestLocalizer:
         self.modpack = modpack
         self.quests = [QuestSNBT(StringIO(quest.getvalue().decode("utf-8")).read(), self.modpack, quest.name[:-5]) for quest in quests]
     
-    def convert_quests(self) -> None:
-        for quest in self.quests:
+    def convert_quests(self, pbar: DeltaGenerator, pbar_text: str) -> None:
+        for idx, quest in enumerate(self.quests):
             quest.convert(self.src_lang)
+            progress = (idx + 1) / len(self.quests)
+            pbar.progress(progress, text=pbar_text.format(progress=f"{progress * 100:.2f}%"))
+        pbar.progress(1.0, text="Successfully converted!")
     
-    def translate_quests(self) -> None:
-        self.src_lang.translate(self.dest_lang)
+    def translate_quests(self, pbar: DeltaGenerator, pbar_text: str) -> None:
+        self.src_lang.translate(self.dest_lang, pbar, pbar_text)
     
     def compress_quests(self, dir: str) -> str:
-        zip_dir = os.path.join(dir, 'quests.zip')
+        zip_dir = os.path.join(dir, 'localized_snbt.zip')
         with zipfile.ZipFile(zip_dir, 'w') as zip_obj:
             for quest in self.quests:
                 zip_obj.writestr(f"{quest.chapter}.snbt", quest.snbt)

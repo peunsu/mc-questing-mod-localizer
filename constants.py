@@ -1,6 +1,9 @@
 import re
 from googletrans.constants import LANGUAGES
 
+MAX_RETRY = 5
+MAX_FILES = 20
+
 TITLE_REGEX = re.compile(r'(?<=\btitle: )\"(?:[^"\\]|\\.)*\"', flags=re.MULTILINE)
 SUBTITLE_REGEX = re.compile(r'(?<=\bsubtitle: )\"(?:[^"\\]|\\.)*\"', flags=re.MULTILINE)
 DESC_REGEX = re.compile(r'(?<=\bdescription: )\[[\s\S.]*?\]\s', flags=re.MULTILINE)
