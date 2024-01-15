@@ -8,7 +8,15 @@ from time import sleep
 from io import BytesIO, StringIO
 from googletrans import Translator
 from streamlit.delta_generator import DeltaGenerator
-from constants import MINECRAFT_TO_GOOGLE, TITLE_REGEX, SUBTITLE_REGEX, DESC_REGEX, STRING_REGEX, MAX_RETRY
+from constants import MINECRAFT_TO_GOOGLE, REGEX, MAX_RETRY
+
+def progress_bar(iterable, pbar: DeltaGenerator, pbar_text: str) -> None:    
+    idx = 0
+    for element in iterable:
+        idx += 1
+        progress = idx / len(iterable)
+        pbar.progress(progress, text=pbar_text.format(progress=progress*100))
+        yield element
 
 class QuestLang:
     lang: str
@@ -27,53 +35,49 @@ class QuestLang:
         if not target.json:
             target.json = self.json.copy()
         if target.lang != self.lang:
-            for idx, (k, v) in enumerate(self.json.items()):
-                if v.startswith("[ ") and v.endswith(" ]"):
+            for key, text in progress_bar(self.json.items(), pbar, pbar_text):
+                if text.startswith("[ ") and text.endswith(" ]"):
                     continue
-                retry_count = 0
-                while True:
-                    try:
-                        target.json[k] = self.translator.translate(v, dest=MINECRAFT_TO_GOOGLE[target.lang]).text
-                        break
-                    except Exception as e:
-                        retry_count += 1
-                        if retry_count == MAX_RETRY:
-                            raise e
-                        sleep(5)
-                progress = (idx + 1) / len(self.json)
-                pbar.progress(progress, text=pbar_text.format(progress=f"{progress * 100:.2f}%"))
-        pbar.progress(1.0, text="Successfully translated!")
+                target.json[key] = self._translate(text, target.lang)
+    
+    def _translate(self, text: str, dest: str) -> str:
+        retry_count = 0
+        while True:
+            try:
+                return self.translator.translate(text, dest=MINECRAFT_TO_GOOGLE[dest]).text
+            except Exception as e:
+                retry_count += 1
+                if retry_count == MAX_RETRY:
+                    raise e
+                sleep(3)
     
 class QuestSNBT:
     snbt: str
     modpack: str
     chapter: str
     
-    def __init__(self, data: str, modpack: str = "modpack", chapter: str = "chapter") -> None:
+    def __init__(self, data: str, modpack: str, chapter: str) -> None:
         self.snbt = data
         self.modpack = modpack
         self.chapter = chapter
     
     def convert(self, lang: QuestLang) -> None:
-        def filter_string(string: str) -> bool:
-            if not string:
-                return False
-            if string[0] == "{" and string[-1] == "}":
-                return False
-            return True
-        
         for key in ["description", "subtitle", "title"]:
-            if key == "title":
-                regex = TITLE_REGEX
-            elif key == "subtitle":
-                regex = SUBTITLE_REGEX
-            elif key == "description":
-                regex = DESC_REGEX
-            
-            for i, element in enumerate(regex.findall(self.snbt)):
-                for j, el in enumerate(filter(filter_string, STRING_REGEX.findall(element))):
-                    self.snbt = self.snbt.replace(f'"{el}"', f'"{{{self.modpack}.{self.chapter}.{key}.{i}.{j}}}"')
-                    lang.update(f"{self.modpack}.{self.chapter}.{key}.{i}.{j}", el)
+            self._convert(lang, key)
+    
+    def _filter(self, string: str) -> bool:
+        if not string:
+            return False
+        if string[0] == "{" and string[-1] == "}":
+            return False
+        return True
+    
+    def _convert(self, lang: QuestLang, key: str) -> None:        
+        regex = REGEX[key]
+        for i, element in enumerate(regex.findall(self.snbt)):
+            for j, el in enumerate(filter(self._filter, REGEX["string"].findall(element))):
+                self.snbt = self.snbt.replace(f'"{el}"', f'"{{{self.modpack}.{self.chapter}.{key}.{i}.{j}}}"')
+                lang.update(key=f"{self.modpack}.{self.chapter}.{key}.{i}.{j}", value=el)
 
 class QuestLocalizer:
     src_lang: QuestLang
@@ -81,18 +85,19 @@ class QuestLocalizer:
     modpack: str
     quests: list[QuestSNBT]
     
-    def __init__(self, quests: list[BytesIO], src: str, dest: str, modpack: str = "modpack") -> None:
+    def __init__(self, quests: list[BytesIO], src: str, dest: str, modpack: str) -> None:
         self.src_lang = QuestLang(src)
         self.dest_lang = QuestLang(dest)
         self.modpack = modpack
-        self.quests = [QuestSNBT(StringIO(quest.getvalue().decode("utf-8")).read(), self.modpack, quest.name[:-5]) for quest in quests]
+        self.quests = [QuestSNBT(
+            data = StringIO(quest.getvalue().decode("utf-8")).read(),
+            modpack = self.modpack,
+            chapter = os.path.splitext(quest.name)[0]
+            ) for quest in quests]
     
     def convert_quests(self, pbar: DeltaGenerator, pbar_text: str) -> None:
-        for idx, quest in enumerate(self.quests):
+        for quest in progress_bar(self.quests, pbar, pbar_text):
             quest.convert(self.src_lang)
-            progress = (idx + 1) / len(self.quests)
-            pbar.progress(progress, text=pbar_text.format(progress=f"{progress * 100:.2f}%"))
-        pbar.progress(1.0, text="Successfully converted!")
     
     def translate_quests(self, pbar: DeltaGenerator, pbar_text: str) -> None:
         self.src_lang.translate(self.dest_lang, pbar, pbar_text)
@@ -109,8 +114,3 @@ class QuestLocalizer:
 
     def get_dest_json(self) -> str:
         return json.dumps(self.dest_lang.json, indent=4, ensure_ascii=False)
-
-if __name__ == "__main__":
-    localizer = QuestLocalizer(None, "en_us", "ko_kr", "atm9")
-    localizer.convert_quests()
-    localizer.translate_quests()

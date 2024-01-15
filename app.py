@@ -43,7 +43,6 @@ st.set_page_config(
 st.title("FTB Quests Localization Tool")
 
 st.subheader("Upload")
-
 uploaded_files = st.file_uploader(
     label = "Upload your FTB Quest file(s) here.",
     type = ["snbt"],
@@ -51,16 +50,13 @@ uploaded_files = st.file_uploader(
     help = "You can upload multiple files at once.",
     on_change = reset_localize_button
 )
-
 if not uploaded_files:
     st.stop()
-
 if len(uploaded_files) > MAX_FILES:
     st.error(f"You can upload up to {MAX_FILES} files at once.")
     st.stop()
 
 st.subheader("Language")
-    
 src = st.selectbox(
     label = "Select the source language.",
     options = MINECRAFT_LANGUAGES,
@@ -68,7 +64,6 @@ src = st.selectbox(
     format_func = lambda x: f"{x} ({MINECRAFT_LANGUAGES[x]})",
     on_change = reset_localize_button
 )
-
 dest = st.selectbox(
     label = "Select the destination language.",
     options = MINECRAFT_LANGUAGES,
@@ -76,36 +71,34 @@ dest = st.selectbox(
     format_func = lambda x: f"{x} ({MINECRAFT_LANGUAGES[x]})",
     on_change = reset_localize_button
 )
-
 if not src or not dest:
     st.stop()
 
 st.subheader("Localize!")
-
 localizer = QuestLocalizer(uploaded_files, src, dest, "atm_9")
-
 st.button(
     label = "Start localization",
     help = "Click this button to start localization.",
     on_click = localize_button,
     disabled = st.session_state.localize
 )
-
 if st.session_state.localize:
     st.toast(body="Localization started!", icon="📝")
     
-    convert_bar_text = "Converting quests... ({progress})"
+    convert_bar_text = "Converting quests... ({progress:.2f}%)"
     convert_bar = st.progress(0, text=convert_bar_text)
     try:
         localizer.convert_quests(convert_bar, convert_bar_text)
+        convert_bar.progress(1.0, text="Successfully converted!")
     except Exception as e:
         st.error(f"An error occurred while converting quests: {e}")
         st.stop()
     
-    translate_bar_text = "Translating quests... ({progress})"
+    translate_bar_text = "Translating quests... ({progress:.2f}%)"
     translate_bar = st.progress(0, text=translate_bar_text)
     try:
         localizer.translate_quests(translate_bar, translate_bar_text)
+        translate_bar.progress(1.0, text="Successfully translated!")
     except Exception as e:
         st.error(f"An error occurred while translating quests: {e}")
         st.stop()
