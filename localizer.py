@@ -28,6 +28,12 @@ class QuestLang:
         self.json = dict()
         self.translator = Translator()
     
+    def __repr__(self) -> str:
+        return f"QuestLang(lang={self.lang}, json={self.json})"
+    
+    def __str__(self) -> str:
+        return self.lang
+    
     def update(self, key: str, value: str) -> None:
         self.json[key] = value
     
@@ -61,6 +67,12 @@ class QuestSNBT:
         self.modpack = modpack
         self.chapter = chapter
     
+    def __repr__(self) -> str:
+        return f"QuestSNBT(snbt={self.snbt}, modpack={self.modpack}, chapter={self.chapter})"
+
+    def __str__(self) -> str:
+        return self.chapter
+    
     def convert(self, lang: QuestLang) -> None:
         for key in ["description", "subtitle", "title"]:
             self._convert(lang, key)
@@ -88,12 +100,18 @@ class QuestLocalizer:
     def __init__(self, quests: list[BytesIO], src: str, dest: str, modpack: str) -> None:
         self.src_lang = QuestLang(src)
         self.dest_lang = QuestLang(dest)
-        self.modpack = modpack
+        self.modpack = REGEX["strip"].sub("", modpack.lower().replace(" ", "_"))
         self.quests = [QuestSNBT(
             data = StringIO(quest.getvalue().decode("utf-8")).read(),
             modpack = self.modpack,
             chapter = os.path.splitext(quest.name)[0]
             ) for quest in quests]
+    
+    def __repr__(self) -> str:
+        return f"QuestLocalizer(src_lang={self.src_lang}, dest_lang={self.dest_lang}, modpack={self.modpack}, quests={self.quests})"
+
+    def __str__(self) -> str:
+        return self.modpack
     
     def convert_quests(self, pbar: DeltaGenerator, pbar_text: str) -> None:
         for quest in progress_bar(self.quests, pbar, pbar_text):

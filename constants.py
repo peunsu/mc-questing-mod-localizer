@@ -2,13 +2,39 @@ import re
 from googletrans.constants import LANGUAGES
 
 MAX_RETRY = 5
-MAX_FILES = 20
+MAX_FILES = 50
+MAX_CHARS = 32
 
 REGEX = {
     "title": re.compile(r'(?<=\btitle: )\"(?:[^"\\]|\\.)*\"', flags=re.MULTILINE),
     "subtitle": re.compile(r'(?<=\bsubtitle: )\"(?:[^"\\]|\\.)*\"', flags=re.MULTILINE),
     "description": re.compile(r'(?<=\bdescription: )\[[\s\S.]*?\]\s', flags=re.MULTILINE),
-    "string": re.compile(r'(?<=\")(?:(?=\\?)\\?.)*?(?=\")', flags=re.MULTILINE)
+    "string": re.compile(r'(?<=\")(?:(?=\\?)\\?.)*?(?=\")', flags=re.MULTILINE),
+    "strip": re.compile('\W+')
+}
+
+MESSAGES = {
+    "convert_quests": "Converting quests... ({progress:.2f}%)",
+    "translate_quests": "Translating quests... ({progress:.2f}%)",
+    "convert_success": "Successfully converted!",
+    "translate_success": "Successfully translated!",
+    "convert_error": "An error occurred while converting quests: {e}",
+    "translate_error": "An error occurred while translating quests: {e}",
+    "download_button": "Download {file_name}",
+    "uploader_label": f"Upload all the FTB Quests files (.snbt) contained in the modpack to localize. (Max: {MAX_FILES} files)",
+    "uploader_help": "You can upload multiple files at once by selecting multiple files in the file selection dialog.",
+    "uploader_empty": "You can find the FTB Quests files (.snbt) in the `config/ftbquests/quests` folder of the modpack.",
+    "uploader_exceed": f"You can upload up to {MAX_FILES} files at once.",
+    "modpack_label": "Enter the shortened name of the modpack. [Example: All the Mods 9 → atm9]",
+    "modpack_help": "This name will be used as the namespace for localization.",
+    "src_label": "Select the language of the quests you uploaded.",
+    "src_help": "This is the language of the quests you uploaded.",
+    "dest_label": "Select the language you want to translate the quests into.",
+    "dest_help": "This is the language you want to translate the quests into.",
+    "localize_label": "Start localization",
+    "localize_help": "Click this button to start localization.",
+    "localize_start": "Localization started!",
+    "localize_finish": "Localization finished!"
 }
 
 MINECRAFT_LOCALES = [
