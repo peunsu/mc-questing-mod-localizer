@@ -52,7 +52,7 @@ st.set_page_config(
         "Report a Bug": "https://github.com/peunsu/ftbq-localization-tool/issues",
         "About": '''
         ### FTB Quests Localization Tool\n
-        Release v1.0 ([GitHub](https://github.com/peunsu/ftbq-localization-tool))\n
+        Release v1.0.0 ([GitHub](https://github.com/peunsu/ftbq-localization-tool))\n
         Created by [peunsu](https://github.com/peunsu).\n
         [FTB Quests](https://www.curseforge.com/minecraft/mc-mods/ftb-quests-forge) by [FTB Team](https://www.curseforge.com/members/ftb).\n
         '''
