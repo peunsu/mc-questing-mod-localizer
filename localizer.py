@@ -132,3 +132,9 @@ class QuestLocalizer:
 
     def get_dest_json(self) -> str:
         return json.dumps(self.dest_lang.json, indent=4, ensure_ascii=False)
+
+    def get_template_json(self) -> str:
+        temp_json = self.src_lang.json.copy()
+        for k in temp_json.keys():
+            temp_json[k] = ""
+        return json.dumps(temp_json, indent=4, ensure_ascii=False)
