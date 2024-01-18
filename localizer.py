@@ -34,28 +34,41 @@ class QuestLang:
     def __str__(self) -> str:
         return self.lang
     
+    def __eq__(self, other: QuestLang) -> bool:
+        return self.lang == other.lang
+    
+    def __ne__(self, other: QuestLang) -> bool:
+        return self.lang != other.lang
+    
+    def is_empty(self) -> bool:
+        return not self.json
+
+    def copy_from(self, other: QuestLang) -> None:
+        self.json = other.json.copy()
+    
     def update(self, key: str, value: str) -> None:
         self.json[key] = value
     
     def translate(self, target: QuestLang, pbar: DeltaGenerator, pbar_text: str) -> None:
-        if not target.json:
-            target.json = self.json.copy()
-        if target.lang != self.lang:
+        if target.is_empty():
+            target.copy_from(self)
+        if target != self:
             for key, text in progress_bar(self.json.items(), pbar, pbar_text):
                 if text.startswith("[ ") and text.endswith(" ]"):
                     continue
-                target.json[key] = self._translate(text, target.lang)
+                target.update(key=key, value=self._translate(text, target))
     
-    def _translate(self, text: str, dest: str) -> str:
+    def _translate(self, text: str, target: QuestLang) -> str:
         retry_count = 0
         while True:
             try:
-                return self.translator.translate(text, dest=MINECRAFT_TO_GOOGLE[dest]).text
+                return self.translator.translate(text, dest=MINECRAFT_TO_GOOGLE[target.lang]).text
             except Exception as e:
                 retry_count += 1
                 if retry_count == MAX_RETRY:
                     raise e
                 sleep(3)
+    
     
 class QuestSNBT:
     snbt: str
@@ -84,11 +97,14 @@ class QuestSNBT:
             return False
         return True
     
+    def _replace_snbt(self, old: str, new: str) -> None:
+        self.snbt = self.snbt.replace(old, new)
+    
     def _convert(self, lang: QuestLang, key: str) -> None:        
         regex = REGEX[key]
         for i, element in enumerate(regex.findall(self.snbt)):
             for j, el in enumerate(filter(self._filter, REGEX["string"].findall(element))):
-                self.snbt = self.snbt.replace(f'"{el}"', f'"{{{self.modpack}.{self.chapter}.{key}.{i}.{j}}}"')
+                self._replace_snbt(f'"{el}"', f'"{{{self.modpack}.{self.chapter}.{key}.{i}.{j}}}"')
                 lang.update(key=f"{self.modpack}.{self.chapter}.{key}.{i}.{j}", value=el)
 
 class QuestLocalizer:
@@ -127,13 +143,16 @@ class QuestLocalizer:
                 zip_obj.writestr(f"{quest.chapter}.snbt", quest.snbt)
         return zip_dir
     
-    def get_src_json(self) -> str:
+    @property
+    def src_json(self) -> str:
         return json.dumps(self.src_lang.json, indent=4, ensure_ascii=False)
 
-    def get_dest_json(self) -> str:
+    @property
+    def dest_json(self) -> str:
         return json.dumps(self.dest_lang.json, indent=4, ensure_ascii=False)
 
-    def get_template_json(self) -> str:
+    @property
+    def template_json(self) -> str:
         temp_json = self.src_lang.json.copy()
         for k in temp_json.keys():
             temp_json[k] = ""
