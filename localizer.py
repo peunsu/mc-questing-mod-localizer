@@ -7,23 +7,27 @@ import zipfile
 from time import sleep
 from io import BytesIO, StringIO
 from googletrans import Translator
-from streamlit.delta_generator import DeltaGenerator
+from utils import ProgressBar
 from constants import MINECRAFT_TO_GOOGLE, REGEX, MAX_RETRY
 
-def progress_bar(iterable, pbar: DeltaGenerator, pbar_text: str) -> None:    
-    idx = 0
-    for element in iterable:
-        idx += 1
-        progress = idx / len(iterable)
-        pbar.progress(progress, text=pbar_text.format(progress=progress*100))
-        yield element
-
 class QuestLang:
+    """FTB Quests Language Class
+    
+    Args
+    ----
+        lang (str): The language of the quests.
+    
+    Attributes
+    ----------
+        lang (str): The language of the quests.
+        json (dict): The dictionary containing the text.
+        translator (googletrans.Translator): The translator.
+    """
     lang: str
     json: dict
     translator: Translator
     
-    def __init__(self, lang: str = "en_us"):
+    def __init__(self, lang: str):
         self.lang = lang
         self.json = dict()
         self.translator = Translator()
@@ -41,19 +45,44 @@ class QuestLang:
         return self.lang != other.lang
     
     def is_empty(self) -> bool:
+        """Check if the language dictionary is empty.
+
+        Returns
+        -------
+            bool: True if the language dictionary is empty, False otherwise.
+        """
         return not self.json
 
     def copy_from(self, other: QuestLang) -> None:
+        """Copy the language dictionary from another QuestLang object.
+
+        Args
+        ----
+            other (QuestLang): The QuestLang object to copy from.
+        """
         self.json = other.json.copy()
     
     def update(self, key: str, value: str) -> None:
+        """Update the language dictionary.
+
+        Args
+        ----
+            key (str): The key of the dictionary to update.
+            value (str): The value of the dictionary to update.
+        """
         self.json[key] = value
     
-    def translate(self, target: QuestLang, pbar: DeltaGenerator, pbar_text: str) -> None:
+    def translate(self, target: QuestLang) -> None:
+        """Translate the language dictionary.
+
+        Args
+        ----
+            target (QuestLang): The QuestLang object to translate into.
+        """
         if target.is_empty():
             target.copy_from(self)
         if target != self:
-            for key, text in progress_bar(self.json.items(), pbar, pbar_text):
+            for key, text in ProgressBar(self.json.items(), task="translate"):
                 if text.startswith("[ ") and text.endswith(" ]"):
                     continue
                 target.update(key=key, value=self._translate(text, target))
@@ -71,6 +100,20 @@ class QuestLang:
     
     
 class QuestSNBT:
+    """FTB Quests SNBT Class
+    
+    Args
+    ----
+        data (str): The SNBT data.
+        modpack (str): The modpack name.
+        chapter (str): The chapter name.
+    
+    Attributes
+    ----------
+        snbt (str): The SNBT data.
+        modpack (str): The modpack name.
+        chapter (str): The chapter name.
+    """
     snbt: str
     modpack: str
     chapter: str
@@ -87,6 +130,12 @@ class QuestSNBT:
         return self.chapter
     
     def convert(self, lang: QuestLang) -> None:
+        """Convert the SNBT data.
+
+        Args
+        ----
+            lang (QuestLang): The QuestLang object to save the converted text.
+        """
         for key in ["description", "subtitle", "title"]:
             self._convert(lang, key)
     
@@ -108,14 +157,30 @@ class QuestSNBT:
                 lang.update(key=f"{self.modpack}.{self.chapter}.{key}.{i}.{j}", value=el)
 
 class QuestLocalizer:
-    src_lang: QuestLang
-    dest_lang: QuestLang
+    """FTB Quests Localizer Class
+
+    Args
+    ----
+        quests (list[BytesIO]): The list of BytesIO objects containing the quests.
+        src (str): The source language.
+        dest (str): The destination language.
+        modpack (str): The modpack name.
+    
+    Attributes
+    ----------
+        src (QuestLang): The QuestLang object of the source language.
+        dest (QuestLang): The QuestLang object of the destination language.
+        modpack (str): The modpack name.
+        quests (list[QuestSNBT]): The list of QuestSNBT objects.
+    """
+    src: QuestLang
+    dest: QuestLang
     modpack: str
     quests: list[QuestSNBT]
     
     def __init__(self, quests: list[BytesIO], src: str, dest: str, modpack: str) -> None:
-        self.src_lang = QuestLang(src)
-        self.dest_lang = QuestLang(dest)
+        self.src = QuestLang(src)
+        self.dest = QuestLang(dest)
         self.modpack = REGEX["strip"].sub("", modpack.lower().replace(" ", "_"))
         self.quests = [QuestSNBT(
             data = StringIO(quest.getvalue().decode("utf-8")).read(),
@@ -124,20 +189,35 @@ class QuestLocalizer:
             ) for quest in quests]
     
     def __repr__(self) -> str:
-        return f"QuestLocalizer(src_lang={self.src_lang}, dest_lang={self.dest_lang}, modpack={self.modpack}, quests={self.quests})"
+        return f"QuestLocalizer(src={self.src}, dest={self.dest}, modpack={self.modpack}, quests={self.quests})"
 
     def __str__(self) -> str:
         return self.modpack
     
-    def convert_quests(self, pbar: DeltaGenerator, pbar_text: str) -> None:
-        for quest in progress_bar(self.quests, pbar, pbar_text):
-            quest.convert(self.src_lang)
+    def convert_quests(self) -> None:
+        """Convert the quests.
+        """
+        for quest in ProgressBar(self.quests, task="convert"):
+            quest.convert(self.src)
     
-    def translate_quests(self, pbar: DeltaGenerator, pbar_text: str) -> None:
-        self.src_lang.translate(self.dest_lang, pbar, pbar_text)
+    def translate_quests(self) -> None:
+        """Translate the quests.
+        """
+        self.src.translate(self.dest)
     
-    def compress_quests(self, dir: str) -> str:
-        zip_dir = os.path.join(dir, 'localized_snbt.zip')
+    def compress_quests(self, dir: str, file_name: str = "localized_snbt.zip") -> str:
+        """Compress the quests into a zip file.
+
+        Args
+        ----
+            dir (str): The directory to save the zip file.
+            file_name (str, optional): The name of the zip file.
+
+        Returns
+        -------
+            str: The path of the zip file.
+        """
+        zip_dir = os.path.join(dir, file_name)
         with zipfile.ZipFile(zip_dir, 'w') as zip_obj:
             for quest in self.quests:
                 zip_obj.writestr(f"{quest.chapter}.snbt", quest.snbt)
@@ -145,15 +225,34 @@ class QuestLocalizer:
     
     @property
     def src_json(self) -> str:
-        return json.dumps(self.src_lang.json, indent=4, ensure_ascii=False)
+        """Get the JSON string of the source language.
+
+        Returns
+        -------
+            str: The JSON string of the source language.
+        """
+        return json.dumps(self.src.json, indent=4, ensure_ascii=False)
 
     @property
     def dest_json(self) -> str:
-        return json.dumps(self.dest_lang.json, indent=4, ensure_ascii=False)
+        """Get the JSON string of the destination language.
+
+        Returns
+        -------
+            str: The JSON string of the destination language.
+        """
+        return json.dumps(self.dest.json, indent=4, ensure_ascii=False)
 
     @property
     def template_json(self) -> str:
-        temp_json = self.src_lang.json.copy()
-        for k in temp_json.keys():
-            temp_json[k] = ""
-        return json.dumps(temp_json, indent=4, ensure_ascii=False)
+        """Get the JSON string of the template language.
+
+        Returns
+        -------
+            str: The JSON string of the template language.
+        """
+        temp = QuestLang("template")
+        temp.copy_from(self.src)
+        for k in temp.json.keys():
+            temp.update(key=k, value="")
+        return json.dumps(temp.json, indent=4, ensure_ascii=False)

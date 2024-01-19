@@ -1,4 +1,5 @@
 import re
+
 from googletrans.constants import LANGUAGES
 
 MAX_RETRY = 5
@@ -15,12 +16,14 @@ REGEX = {
 
 MESSAGES = {
     "convert_quests": "Converting quests... ({progress:.2f}%)",
-    "translate_quests": "Translating quests... ({progress:.2f}%)",
     "convert_success": "Successfully converted!",
-    "translate_success": "Successfully translated!",
     "convert_error": "An error occurred while converting quests: {e}",
+    "translate_quests": "Translating quests... ({progress:.2f}%)",
+    "translate_success": "Successfully translated!",
     "translate_error": "An error occurred while translating quests: {e}",
+    "translate_same_lang": "The source language and the destination language are the same.",
     "download_button": "Download {file_name}",
+    "show_json": "Show JSON",
     "uploader_label": f"Upload all the FTB Quests files (.snbt) contained in the modpack to localize. (Max: {MAX_FILES} files)",
     "uploader_help": "You can upload multiple files at once by selecting multiple files in the file selection dialog.",
     "uploader_empty": "You can find the FTB Quests files (.snbt) in the `config/ftbquests/quests` folder of the modpack.",
@@ -35,8 +38,6 @@ MESSAGES = {
     "dest_help": "This is the language you want to translate the quests into.",
     "localize_label": "Start localization",
     "localize_help": "Click this button to start localization.",
-    "localize_start": "Localization started!",
-    "localize_finish": "Localization finished!",
     "apply_manual_1": "1. Download `localized_snbt.zip`. (Click the button below)",
     "apply_manual_2": "2. Extract `localized_snbt.zip` and replace the original `.snbt` files in `config/ftbquests/quests` folder with the extracted files.",
     "apply_manual_3_1": "3. Download `{src}.json` and `{dest}.json`. (Click the buttons below)",
@@ -45,13 +46,13 @@ MESSAGES = {
     "apply_manual_3_2": "3. Download `{src}.json`. (Click the button below)",
     "apply_manual_4_2": "4. Put `{src}.json` in `kubejs/assets/kubejs/lang` folder.",
     "apply_manual_5_2": "5. Done!",
-    "apply_manual_warning": "Do not change `{src}.json`.",
+    "apply_manual_warning": "Do not change the key of the json file. (e.g. `modpack.chapter.title.0.0`)",
     "add_manual_1": "1. Download `template_lang.json`. (Click the button below)",
     "add_manual_2": "2. Rename `template_lang.json` to `<language>.json`. [Example: `en_us.json`]",
-    "add_manual_3": "3. Translate the text in `{src}.json` and put the translated text in `<language>.json`. You can use this localization tool or any translator to translate the text.",
+    "add_manual_3": "3. Translate the text in `{src}.json` and put the translated text in `<language>.json`. You may use this localization tool or any translator to translate the text.",
     "add_manual_4": "4. Put `<language>.json` in `kubejs/assets/kubejs/lang` folder.",
     "add_manual_5": "5. Done!",
-    "add_manual_warning": "Do not change `{src}.json`. The translated text should be put in `<language>.json`.",
+    "add_manual_warning": "The translated text should be put in `<language>.json`, not in `{src}.json`.",
     "lang_link_label": "List of Minecraft languages",
     "lang_link_url": "https://minecraft.fandom.com/wiki/Language#Languages",
     "lang_link_help": "Click this link to see the list of Minecraft languages.",
