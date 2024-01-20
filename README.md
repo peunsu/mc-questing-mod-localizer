@@ -1,5 +1,5 @@
 # ftbq-localization-tool
-![ftbq](https://media.forgecdn.net/avatars/275/363/637261948352026071.png)
+![](https://media.forgecdn.net/avatars/275/363/637261948352026071.png)
 The localization tool for FTB Quests, a questing mod for Minecraft.
 
 [Streamlit App](https://ftbq-localization-tool.streamlit.app/)
