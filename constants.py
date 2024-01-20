@@ -1,5 +1,4 @@
 import re
-
 from googletrans.constants import LANGUAGES
 
 MAX_RETRY = 5
@@ -24,9 +23,9 @@ MESSAGES = {
     "translate_same_lang": "The source language and the destination language are the same.",
     "download_button": "Download {file_name}",
     "show_json": "Show JSON",
-    "uploader_label": f"Upload all the FTB Quests files (.snbt) contained in the modpack to localize. (Max: {MAX_FILES} files)",
+    "uploader_snbt_label": f"Upload all the FTB Quests files (.snbt) contained in the modpack to localize. (Max: {MAX_FILES} files)",
+    "uploader_snbt_info": "You can find the FTB Quests files (.snbt) in the `config/ftbquests/quests` folder of the modpack.",
     "uploader_help": "You can upload multiple files at once by selecting multiple files in the file selection dialog.",
-    "uploader_empty": "You can find the FTB Quests files (.snbt) in the `config/ftbquests/quests` folder of the modpack.",
     "uploader_exceed": f"You can upload up to {MAX_FILES} files at once.",
     "modpack_label": "Enter the shortened name of the modpack. [Example: All the Mods 9 → atm9]",
     "modpack_help": "This name will be used as the namespace for localization.",

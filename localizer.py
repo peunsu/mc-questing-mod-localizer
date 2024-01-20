@@ -7,7 +7,7 @@ import zipfile
 from time import sleep
 from io import BytesIO, StringIO
 from googletrans import Translator
-from utils import ProgressBar
+from components import ProgressBar
 from constants import MINECRAFT_TO_GOOGLE, REGEX, MAX_RETRY
 
 class QuestLang:
