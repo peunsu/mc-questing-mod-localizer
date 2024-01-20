@@ -1,4 +1,25 @@
 # ftbq-localization-tool
-The localization tool for FTB Quest, a questing mod for Minecraft.
+![ftbq](https://media.forgecdn.net/avatars/275/363/637261948352026071.png)
+The localization tool for FTB Quests, a questing mod for Minecraft.
 
 [Streamlit App](https://ftbq-localization-tool.streamlit.app/)
+
+# Installation
+* Python 3.9 or higher is required
+* Clone the repo:
+```bash
+$ git clone https://github.com/peunsu/ftbq-localization-tool
+```
+* Create the virtual environment (optional):
+```bash
+$ python -m venv venv
+$ source venv/bin/activate
+```
+* Install requirements:
+```bash
+$ pip install -r requirements.txt
+```
+* Run the application:
+```bash
+$ streamlit run app.py
+```
