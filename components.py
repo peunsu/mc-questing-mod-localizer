@@ -137,7 +137,7 @@ class FileUploader:
     
     Attributes
     ----------
-        type (str): The type of the file to upload.
+        type (str): The type of the file to upload. (snbt or json)
         files (list[BytesIO]): The uploaded files.
         label (str): The key of the label text of the file uploader.
         info (str): The key of the info text of the file uploader.
@@ -154,6 +154,9 @@ class FileUploader:
         if self.type == "snbt":
             self.label = "uploader_snbt_label"
             self.info = "uploader_snbt_info"
+        elif self.type == "json":
+            self.label = "uploader_json_label"
+            self.info = "uploader_json_info"
     
     def __repr__(self) -> str:
         return f"FileUploader(type={self.type}, files={self.files}, label={self.label}, info={self.info})"
@@ -174,7 +177,7 @@ class FileUploader:
         if self.is_empty():
             Message(self.info, stop=True).info()
         elif self.is_exceed():
-            Message("uploader_exceed", stop=True).error()
+            Message("uploader_exceed", max=MAX_FILES[self.type], stop=True).error()
     
     def is_empty(self) -> bool:
         """Check if the file uploader is empty.
@@ -192,7 +195,7 @@ class FileUploader:
         -------
             bool: True if the file uploader exceeds the maximum number of files, False otherwise.
         """
-        return len(self.files) > MAX_FILES
+        return len(self.files) > MAX_FILES[self.type]
     
 class ModpackInput:
     """Modpack Input Class
@@ -435,7 +438,12 @@ class Manager:
             Message("translate_success").toast()
         except Exception as e:
             Message("translate_error", stop=True, e=e).error()
-            
+
+    def download_bqm(self) -> None:
+        """Show the download button for the localized BQM file.
+        """
+        DownloadButton(BytesIO(self.localizer.quest_json.encode("utf-8")), "DefaultQuests.json").show()
+    
     def download_snbt(self) -> None:
         """Show the download button for the localized SNBT files.
         """
