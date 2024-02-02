@@ -443,6 +443,31 @@ class Manager:
         """Show the download button for the localized BQM file.
         """
         DownloadButton(BytesIO(self.localizer.quest_json.encode("utf-8")), "DefaultQuests.json").show()
+        
+    def download_lang(self, template: bool = False) -> None:
+        """Show the download button for the localized LANG files.
+
+        Args
+        ----
+            template (bool, optional): If True, download the template LANG file. Defaults to False.
+        """
+        if template:
+            DownloadButton(BytesIO(self.localizer.template_lang.encode("utf-8")), "template.lang").show()
+            with st.expander(Message("show_lang").text):
+                st.code(self.localizer.template_lang)
+            return
+        
+        if st.session_state.translate:
+            DownloadButton(BytesIO(self.localizer.src_lang.encode("utf-8")), f"{self.src}.lang").show()
+            DownloadButton(BytesIO(self.localizer.dest_lang.encode("utf-8")), f"{self.dest}.lang").show()
+            with st.expander(Message("show_lang").text):
+                tab1, tab2 = st.tabs([f"{self.src}.lang", f"{self.dest}.lang"])
+                tab1.code(self.localizer.src_lang)
+                tab2.code(self.localizer.dest_lang)
+        else:
+            DownloadButton(BytesIO(self.localizer.src_lang.encode("utf-8")), f"{self.src}.lang").show()
+            with st.expander(Message("show_lang").text):
+                st.code(self.localizer.src_lang)
     
     def download_snbt(self) -> None:
         """Show the download button for the localized SNBT files.
@@ -460,7 +485,7 @@ class Manager:
             template (bool, optional): If True, download the template JSON file. Defaults to False.
         """
         if template:
-            DownloadButton(BytesIO(self.localizer.template_json.encode("utf-8")), "template_lang.json").show()
+            DownloadButton(BytesIO(self.localizer.template_json.encode("utf-8")), "template.json").show()
             with st.expander(Message("show_json").text):
                 st.json(self.localizer.template_json)
             return

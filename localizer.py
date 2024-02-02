@@ -63,6 +63,20 @@ class QuestLang:
         """
         self.json = other.json.copy()
     
+    def json_to_lang(self, allow_blank: bool = False) -> str:
+        """Convert the language dictionary to a LANG file format.
+
+        Returns:
+            str: The converted LANG file.
+        """
+        lang = "#PARSE_ESCAPES\n\n"
+        for key, value in self.json.items():
+            if not allow_blank and not value:
+                continue
+            value = value.replace("\n", "\\n")
+            lang += f"{key}={value}\n"
+        return lang
+    
     def update(self, key: str, value: str) -> None:
         """Update the language dictionary.
 
@@ -233,31 +247,44 @@ class BQMQuestData(QuestData):
     def _convert_quest_v1(self, lang: QuestLang, quests: dict) -> None:
         for quest in quests:
             id = quest["questID"]
-            for key in ["name", "description"]:
-                lang.update(key=f"{self.modpack}.quest.{id}.{key}", value=quest.get(key))
-                quest[key] = f"{self.modpack}.quest.{id}.{key}"
+            if quest.get("properties"):
+                property = quest["properties"]["betterquesting"]
+            else:
+                property = quest
+            for key in ["name", "description", "desc"]:
+                if value := property.get(key):
+                    lang.update(key=f"{self.modpack}.quest.{id}.{key}", value=value)
+                    property[key] = f"{self.modpack}.quest.{id}.{key}"
     
     def _convert_line_v1(self, lang: QuestLang, lines: dict) -> None:
         for id, line in enumerate(lines):
-            for key in ["name", "description"]:
-                lang.update(key=f"{self.modpack}.line.{id}.{key}", value=line.get(key))
-                line[key] = f"{self.modpack}.line.{id}.{key}"
+            if line.get("properties"):
+                id = line["lineID"]
+                property = line["properties"]["betterquesting"]
+            else:
+                property = line
+            for key in ["name", "description", "desc"]:
+                if value := property.get(key):
+                    lang.update(key=f"{self.modpack}.line.{id}.{key}", value=value)
+                    property[key] = f"{self.modpack}.line.{id}.{key}"
     
     def _convert_quest_v2(self, lang: QuestLang, quests: dict) -> None:
         for _, quest in quests.items():
             id = quest["questID:3"]
             property = quest["properties:10"]["betterquesting:10"]
             for key in ["name:8", "desc:8"]:
-                lang.update(key=f"{self.modpack}.quest.{id}.{key[:-2]}", value=property.get(key))
-                property[key] = f"{self.modpack}.quest.{id}.{key[:-2]}"
+                if value := property.get(key):
+                    lang.update(key=f"{self.modpack}.quest.{id}.{key[:-2]}", value=value)
+                    property[key] = f"{self.modpack}.quest.{id}.{key[:-2]}"
 
     def _convert_line_v2(self, lang: QuestLang, lines: dict) -> None:
        for _, line in lines.items():
             id = line["lineID:3"]
             property = line["properties:10"]["betterquesting:10"]
             for key in ["name:8", "desc:8"]:
-                lang.update(key=f"{self.modpack}.line.{id}.{key[:-2]}", value=property.get(key))
-                property[key] = f"{self.modpack}.line.{id}.{key[:-2]}"
+                if value := property.get(key):
+                    lang.update(key=f"{self.modpack}.line.{id}.{key[:-2]}", value=value)
+                    property[key] = f"{self.modpack}.line.{id}.{key[:-2]}"
 
 class QuestLocalizer(metaclass=ABCMeta):
     """Quest Localizer Class (Abstract)
@@ -303,40 +330,6 @@ class QuestLocalizer(metaclass=ABCMeta):
         """Translate the quests.
         """
         self.src.translate(self.dest)
-    
-    @property
-    def src_json(self) -> str:
-        """Get the JSON string of the source language.
-
-        Returns
-        -------
-            str: The JSON string of the source language.
-        """
-        return json.dumps(self.src.json, indent=4, ensure_ascii=False)
-
-    @property
-    def dest_json(self) -> str:
-        """Get the JSON string of the destination language.
-
-        Returns
-        -------
-            str: The JSON string of the destination language.
-        """
-        return json.dumps(self.dest.json, indent=4, ensure_ascii=False)
-
-    @property
-    def template_json(self) -> str:
-        """Get the JSON string of the template language.
-
-        Returns
-        -------
-            str: The JSON string of the template language.
-        """
-        temp = QuestLang("template")
-        temp.copy_from(self.src)
-        for k in temp.json.keys():
-            temp.update(key=k, value="")
-        return json.dumps(temp.json, indent=4, ensure_ascii=False)
 
 class FTBQuestLocalizer(QuestLocalizer):
     """FTB Quests Localizer Class
@@ -394,6 +387,40 @@ class FTBQuestLocalizer(QuestLocalizer):
                 zip_obj.writestr(f"{quest.chapter}.snbt", quest.data)
         return zip_dir
 
+    @property
+    def src_json(self) -> str:
+        """Get the JSON string of the source language.
+
+        Returns
+        -------
+            str: The JSON string of the source language.
+        """
+        return json.dumps(self.src.json, indent=4, ensure_ascii=False)
+
+    @property
+    def dest_json(self) -> str:
+        """Get the JSON string of the destination language.
+
+        Returns
+        -------
+            str: The JSON string of the destination language.
+        """
+        return json.dumps(self.dest.json, indent=4, ensure_ascii=False)
+
+    @property
+    def template_json(self) -> str:
+        """Get the JSON string of the template language.
+
+        Returns
+        -------
+            str: The JSON string of the template language.
+        """
+        temp = QuestLang("template")
+        temp.copy_from(self.src)
+        for k in temp.json.keys():
+            temp.update(key=k, value="")
+        return json.dumps(temp.json, indent=4, ensure_ascii=False)
+
 class BQMQuestLocalizer(QuestLocalizer):
     """BQM Quest Localizer Class
 
@@ -431,6 +458,37 @@ class BQMQuestLocalizer(QuestLocalizer):
     def __str__(self) -> str:
         return self.modpack
 
+    @property
+    def src_lang(self) -> str:
+        """Get the LANG string of the source language.
+        Returns
+        -------
+            str: 
+        """
+        return self.src.json_to_lang()
+
+    @property
+    def dest_lang(self) -> str:
+        """Get the LANG string of the destination language.
+        Returns
+        -------
+            str: 
+        """
+        return self.dest.json_to_lang()
+
+    @property
+    def template_lang(self) -> str:
+        """Get the LANG string of the template language.
+        Returns
+        -------
+            str: 
+        """
+        temp = QuestLang("template")
+        temp.copy_from(self.src)
+        for k in temp.json.keys():
+            temp.update(key=k, value="")
+        return temp.json_to_lang(allow_blank=True)
+    
     @property
     def quest_json(self) -> str:
         """Get the JSON string of the quests.

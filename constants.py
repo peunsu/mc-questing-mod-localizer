@@ -1,7 +1,7 @@
 import re
 from googletrans.constants import LANGUAGES
 
-VERSION = "1.2.1"
+VERSION = "1.3.0"
 
 MAX_RETRY = 5
 MAX_CHARS = 32
@@ -30,6 +30,7 @@ MESSAGES = {
     "translate_same_lang": "The source language and the destination language are the same.",
     "download_button": "Download {file_name}",
     "show_json": "Show JSON",
+    "show_lang": "Show LANG",
     "uploader_snbt_label": f"Upload all the quest files (`.snbt`) contained in the modpack to localize. [Max: {MAX_FILES['snbt']} files]",
     "uploader_snbt_info": "You can find the quest files (`.snbt`) in the `config/ftbquests/quests` folder of the modpack.",
     "uploader_json_label": "Upload the quest file (`DefaultQuests.json`) contained in the modpack to localize.",
@@ -46,21 +47,22 @@ MESSAGES = {
     "dest_help": "This is the language you want to translate the quests into.",
     "localize_label": "Start localization",
     "localize_help": "Click this button to start localization.",
-    "apply_manual_1": "1. Download `localized_snbt.zip`. (Click the button below)",
-    "apply_manual_2": "2. Extract `localized_snbt.zip` and replace the original `.snbt` files in `config/ftbquests/quests` folder with the extracted files.",
-    "apply_manual_3_1": "3. Download `{src}.json` and `{dest}.json`. (Click the buttons below)",
-    "apply_manual_4_1": "4. Put `{src}.json` and `{dest}.json` in `kubejs/assets/kubejs/lang` folder.",
-    "apply_manual_5_1": "5. Done! If you want to fix mistranslated text, edit `{dest}.json`.",
-    "apply_manual_3_2": "3. Download `{src}.json`. (Click the button below)",
-    "apply_manual_4_2": "4. Put `{src}.json` in `kubejs/assets/kubejs/lang` folder.",
+    "apply_manual_1": "1. Download `{filename}`. (Click the button below)",
+    "apply_manual_2_1": "2. Extract `{filename}` and replace the original `.{ext}` files in `{dir}` folder with the extracted files.",
+    "apply_manual_2_2": "2. Replace the original `.{ext}` file in `{dir}` folder with the downloaded `{filename}`.",
+    "apply_manual_3_1": "3. Download `{src}.{ext}` and `{dest}.{ext}`. (Click the buttons below)",
+    "apply_manual_4_1": "4. Put `{src}.{ext}` and `{dest}.{ext}` in `{dir}` folder.",
+    "apply_manual_5_1": "5. Done! If you want to fix mistranslated text, edit `{dest}.{ext}`.",
+    "apply_manual_3_2": "3. Download `{src}.{ext}`. (Click the button below)",
+    "apply_manual_4_2": "4. Put `{src}.{ext}` in `{dir}` folder.",
     "apply_manual_5_2": "5. Done!",
-    "apply_manual_warning": "Do not change the key of the json file. (e.g. `modpack.chapter.title.0.0`)",
-    "add_manual_1": "1. Download `template_lang.json`. (Click the button below)",
-    "add_manual_2": "2. Rename `template_lang.json` to `<language>.json`. [Example: `en_us.json`]",
-    "add_manual_3": "3. Translate the text in `{src}.json` and put the translated text in `<language>.json`. You may use this localization tool or any translator to translate the text.",
-    "add_manual_4": "4. Put `<language>.json` in `kubejs/assets/kubejs/lang` folder.",
+    "apply_manual_warning": "Do not change the key of the {ext} file. (e.g. `{example}`)",
+    "add_manual_1": "1. Download `template.{ext}`. (Click the button below)",
+    "add_manual_2": "2. Rename `template.{ext}` to `<language>.{ext}`. [Example: `en_us.{ext}`]",
+    "add_manual_3": "3. Translate the text in `{src}.{ext}` and put the translated text in `<language>.{ext}`. You may use this localization tool or any translator to translate the text.",
+    "add_manual_4": "4. Put `<language>.{ext}` in `{dir}` folder.",
     "add_manual_5": "5. Done!",
-    "add_manual_warning": "The translated text should be put in `<language>.json`, not in `{src}.json`.",
+    "add_manual_warning": "The translated text should be put in `<language>.{ext}`, not in `{src}.{ext}`.",
     "lang_link_label": "List of Minecraft languages",
     "lang_link_url": "https://minecraft.fandom.com/wiki/Language#Languages",
     "lang_link_help": "Click this link to see the list of Minecraft languages.",

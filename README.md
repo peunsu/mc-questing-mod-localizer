@@ -1,5 +1,5 @@
-# ftbq-localization-tool
-The localization tool for FTB Quests, a questing mod for Minecraft.
+# Minecraft Questing Mod Localizer
+The localization tool for Minecraft Questing Mod(FTB Quests, Better Questing).
 
 * Web Service URL: https://ftbq-localization-tool.streamlit.app
 
@@ -7,7 +7,7 @@ The localization tool for FTB Quests, a questing mod for Minecraft.
 * Python 3.9 or higher is required
 * Clone the repo:
 ```bash
-$ git clone https://github.com/peunsu/ftbq-localization-tool
+$ git clone https://github.com/peunsu/mc-questing-mod-localizer
 ```
 * Create the virtual environment (optional):
 ```bash
