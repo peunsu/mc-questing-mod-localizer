@@ -1,18 +1,23 @@
 import streamlit as st
 
-from utils import localize_init, set_page_config
+from utils import localize_init, language_init, set_page_config
 from localizer import FTBQuestLocalizer
 from components import *
+from constants import VERSION
 
 localize_init()
+language_init()
 
 set_page_config(
     title = "FTB Quests Localizer",
     icon = "https://media.forgecdn.net/avatars/275/363/637261948352026071.png"
 )
 
+with st.sidebar:
+    LanguageRadio().show()
+
 st.title("FTB Quests Localizer")
-st.caption(Message("version").text)
+st.caption(Message("version", version=VERSION).text)
 
 st.page_link("Home.py", label="Back to Home", icon="↩️")
 

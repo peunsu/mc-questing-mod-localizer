@@ -1,18 +1,23 @@
 import streamlit as st
 
-from utils import localize_init, set_page_config
+from utils import localize_init, language_init, set_page_config
 from localizer import BQMQuestLocalizer
 from components import *
+from constants import VERSION
 
 localize_init()
+language_init()
 
 set_page_config(
     title = "Better Questing Localizer",
     icon = "https://media.forgecdn.net/avatars/30/140/635857624698238672.png"
 )
 
+with st.sidebar:
+    LanguageRadio().show()
+
 st.title("Better Questing Localizer")
-st.caption(Message("version").text)
+st.caption(Message("version", version=VERSION).text)
 
 st.page_link("Home.py", label="Back to Home", icon="↩️")
 

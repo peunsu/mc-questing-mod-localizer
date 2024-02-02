@@ -28,7 +28,7 @@ class Message:
     stop: bool
     
     def __init__(self, key: str, stop: bool = False, **kwargs):
-        self.message = MESSAGES[key].format(**kwargs)
+        self.message = MESSAGES[st.session_state.lang][key].format(**kwargs)
         self.stop = stop
     
     def __repr__(self) -> str:
@@ -128,6 +128,31 @@ class ProgressBar:
         self.pbar.progress(progress, text=pbar_text)
         return element
 
+class LanguageRadio:
+    """Language Radio Class
+    
+    Attributes
+    ----------
+        options (list[str]): The options of the radio button.
+    """
+    def __init__(self) -> None:
+        self.options = ["en_us", "ko_kr"]
+    
+    def __repr__(self) -> str:
+        return f"LanguageRadio()"
+    
+    def __str__(self) -> str:
+        return self.__repr__()
+    
+    def show(self) -> None:
+        st.radio(
+            label = "Site Language",
+            options = self.options,
+            index = self.options.index(st.session_state.lang) if "lang" in st.session_state else 0,
+            format_func = lambda x: MINECRAFT_LANGUAGES[x],
+            key = "lang"
+        )
+
 class FileUploader:
     """File Uploader Class
     
@@ -168,7 +193,7 @@ class FileUploader:
         """Show the file uploader.
         """
         self.files = st.file_uploader(
-            label = Message(self.label).text,
+            label = Message(self.label, max=MAX_FILES[self.type]).text,
             type = [self.type],
             accept_multiple_files = True,
             help = Message("uploader_help").text,

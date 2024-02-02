@@ -6,6 +6,12 @@ def localize_init() -> None:
     """
     if 'localize' not in st.session_state:
         st.session_state.localize = False
+        
+def language_init() -> None:
+    """Initialize the session state "lang" to "en_us".
+    """
+    if 'lang' not in st.session_state:
+        st.session_state.lang = "en_us"
 
 def localize_button() -> None:
     """Set the session state "localize" to True.
@@ -16,7 +22,7 @@ def reset_localize_button() -> None:
     """Set the session state "localize" to False.
     """
     st.session_state.localize = False
-    
+
 def set_page_config(title: str, icon: str) -> None:
     st.set_page_config(
         page_title = title,
