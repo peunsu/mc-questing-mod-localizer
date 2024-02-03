@@ -1,9 +1,17 @@
+import os
 import re
+import json
 from googletrans.constants import LANGUAGES
 
+VERSION = "1.3.0"
+
 MAX_RETRY = 5
-MAX_FILES = 50
 MAX_CHARS = 32
+
+MAX_FILES = {
+    "snbt": 50,
+    "json": 1
+}
 
 REGEX = {
     "title": re.compile(r'(?<=\btitle: )\"(?:[^"\\]|\\.)*\"', flags=re.MULTILINE),
@@ -13,49 +21,11 @@ REGEX = {
     "strip": re.compile('\W+')
 }
 
-MESSAGES = {
-    "convert_quests": "Converting quests... ({progress:.2f}%)",
-    "convert_success": "Successfully converted!",
-    "convert_error": "An error occurred while converting quests: {e}",
-    "translate_quests": "Translating quests... ({progress:.2f}%)",
-    "translate_success": "Successfully translated!",
-    "translate_error": "An error occurred while translating quests: {e}",
-    "translate_same_lang": "The source language and the destination language are the same.",
-    "download_button": "Download {file_name}",
-    "show_json": "Show JSON",
-    "uploader_snbt_label": f"Upload all the FTB Quests files (.snbt) contained in the modpack to localize. (Max: {MAX_FILES} files)",
-    "uploader_snbt_info": "You can find the FTB Quests files (.snbt) in the `config/ftbquests/quests` folder of the modpack.",
-    "uploader_help": "You can upload multiple files at once by selecting multiple files in the file selection dialog.",
-    "uploader_exceed": f"You can upload up to {MAX_FILES} files at once.",
-    "modpack_label": "Enter the shortened name of the modpack. [Example: All the Mods 9 → atm9]",
-    "modpack_help": "This name will be used as the namespace for localization.",
-    "auto_translate_label": "Do you want to translate the quests automatically using Google Translate?",
-    "auto_translate_help": "If you select 'Yes', the quests will be translated automatically using Google Translate.",
-    "src_label": "Select the language of the quests you uploaded.",
-    "src_help": "This is the language of the quests you uploaded.",
-    "dest_label": "Select the language you want to translate the quests into.",
-    "dest_help": "This is the language you want to translate the quests into.",
-    "localize_label": "Start localization",
-    "localize_help": "Click this button to start localization.",
-    "apply_manual_1": "1. Download `localized_snbt.zip`. (Click the button below)",
-    "apply_manual_2": "2. Extract `localized_snbt.zip` and replace the original `.snbt` files in `config/ftbquests/quests` folder with the extracted files.",
-    "apply_manual_3_1": "3. Download `{src}.json` and `{dest}.json`. (Click the buttons below)",
-    "apply_manual_4_1": "4. Put `{src}.json` and `{dest}.json` in `kubejs/assets/kubejs/lang` folder.",
-    "apply_manual_5_1": "5. Done! If you want to fix mistranslated text, edit `{dest}.json`.",
-    "apply_manual_3_2": "3. Download `{src}.json`. (Click the button below)",
-    "apply_manual_4_2": "4. Put `{src}.json` in `kubejs/assets/kubejs/lang` folder.",
-    "apply_manual_5_2": "5. Done!",
-    "apply_manual_warning": "Do not change the key of the json file. (e.g. `modpack.chapter.title.0.0`)",
-    "add_manual_1": "1. Download `template_lang.json`. (Click the button below)",
-    "add_manual_2": "2. Rename `template_lang.json` to `<language>.json`. [Example: `en_us.json`]",
-    "add_manual_3": "3. Translate the text in `{src}.json` and put the translated text in `<language>.json`. You may use this localization tool or any translator to translate the text.",
-    "add_manual_4": "4. Put `<language>.json` in `kubejs/assets/kubejs/lang` folder.",
-    "add_manual_5": "5. Done!",
-    "add_manual_warning": "The translated text should be put in `<language>.json`, not in `{src}.json`.",
-    "lang_link_label": "List of Minecraft languages",
-    "lang_link_url": "https://minecraft.fandom.com/wiki/Language#Languages",
-    "lang_link_help": "Click this link to see the list of Minecraft languages.",
-}
+MESSAGES = dict()
+for filename in os.listdir("lang"):
+    base, ext = os.path.splitext(filename)
+    if ext == ".json":
+        MESSAGES[base] = json.load(open(f"lang/{filename}"))
 
 MINECRAFT_LOCALES = [
     "af_za",

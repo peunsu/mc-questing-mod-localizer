@@ -28,7 +28,7 @@ class Message:
     stop: bool
     
     def __init__(self, key: str, stop: bool = False, **kwargs):
-        self.message = MESSAGES[key].format(**kwargs)
+        self.message = MESSAGES[st.query_params.lang][key].format(**kwargs)
         self.stop = stop
     
     def __repr__(self) -> str:
@@ -128,6 +128,35 @@ class ProgressBar:
         self.pbar.progress(progress, text=pbar_text)
         return element
 
+class LanguageRadio:
+    """Language Radio Class
+    
+    Attributes
+    ----------
+        options (list[str]): The options of the radio button.
+    """
+    def __init__(self) -> None:
+        self.options = ["en_us", "ko_kr"]
+    
+    def __repr__(self) -> str:
+        return f"LanguageRadio()"
+    
+    def __str__(self) -> str:
+        return self.__repr__()
+    
+    def on_change(self) -> None:
+        if "lang" in st.session_state:
+            st.query_params.lang = st.session_state.lang
+    
+    def show(self) -> None:
+        st.radio(
+            label = "Site Language",
+            options = self.options,
+            format_func = lambda x: MINECRAFT_LANGUAGES[x],
+            on_change = self.on_change,
+            key = "lang"
+        )
+
 class FileUploader:
     """File Uploader Class
     
@@ -137,7 +166,7 @@ class FileUploader:
     
     Attributes
     ----------
-        type (str): The type of the file to upload.
+        type (str): The type of the file to upload. (snbt or json)
         files (list[BytesIO]): The uploaded files.
         label (str): The key of the label text of the file uploader.
         info (str): The key of the info text of the file uploader.
@@ -154,6 +183,9 @@ class FileUploader:
         if self.type == "snbt":
             self.label = "uploader_snbt_label"
             self.info = "uploader_snbt_info"
+        elif self.type == "json":
+            self.label = "uploader_json_label"
+            self.info = "uploader_json_info"
     
     def __repr__(self) -> str:
         return f"FileUploader(type={self.type}, files={self.files}, label={self.label}, info={self.info})"
@@ -165,7 +197,7 @@ class FileUploader:
         """Show the file uploader.
         """
         self.files = st.file_uploader(
-            label = Message(self.label).text,
+            label = Message(self.label, max=MAX_FILES[self.type]).text,
             type = [self.type],
             accept_multiple_files = True,
             help = Message("uploader_help").text,
@@ -174,7 +206,7 @@ class FileUploader:
         if self.is_empty():
             Message(self.info, stop=True).info()
         elif self.is_exceed():
-            Message("uploader_exceed", stop=True).error()
+            Message("uploader_exceed", max=MAX_FILES[self.type], stop=True).error()
     
     def is_empty(self) -> bool:
         """Check if the file uploader is empty.
@@ -192,7 +224,7 @@ class FileUploader:
         -------
             bool: True if the file uploader exceeds the maximum number of files, False otherwise.
         """
-        return len(self.files) > MAX_FILES
+        return len(self.files) > MAX_FILES[self.type]
     
 class ModpackInput:
     """Modpack Input Class
@@ -435,7 +467,37 @@ class Manager:
             Message("translate_success").toast()
         except Exception as e:
             Message("translate_error", stop=True, e=e).error()
-            
+
+    def download_bqm(self) -> None:
+        """Show the download button for the localized BQM file.
+        """
+        DownloadButton(BytesIO(self.localizer.quest_json.encode("utf-8")), "DefaultQuests.json").show()
+        
+    def download_lang(self, template: bool = False) -> None:
+        """Show the download button for the localized LANG files.
+
+        Args
+        ----
+            template (bool, optional): If True, download the template LANG file. Defaults to False.
+        """
+        if template:
+            DownloadButton(BytesIO(self.localizer.template_lang.encode("utf-8")), "template.lang").show()
+            with st.expander(Message("show_lang").text):
+                st.code(self.localizer.template_lang)
+            return
+        
+        if st.session_state.translate:
+            DownloadButton(BytesIO(self.localizer.src_lang.encode("utf-8")), f"{self.src}.lang").show()
+            DownloadButton(BytesIO(self.localizer.dest_lang.encode("utf-8")), f"{self.dest}.lang").show()
+            with st.expander(Message("show_lang").text):
+                tab1, tab2 = st.tabs([f"{self.src}.lang", f"{self.dest}.lang"])
+                tab1.code(self.localizer.src_lang)
+                tab2.code(self.localizer.dest_lang)
+        else:
+            DownloadButton(BytesIO(self.localizer.src_lang.encode("utf-8")), f"{self.src}.lang").show()
+            with st.expander(Message("show_lang").text):
+                st.code(self.localizer.src_lang)
+    
     def download_snbt(self) -> None:
         """Show the download button for the localized SNBT files.
         """
@@ -452,7 +514,7 @@ class Manager:
             template (bool, optional): If True, download the template JSON file. Defaults to False.
         """
         if template:
-            DownloadButton(BytesIO(self.localizer.template_json.encode("utf-8")), "template_lang.json").show()
+            DownloadButton(BytesIO(self.localizer.template_json.encode("utf-8")), "template.json").show()
             with st.expander(Message("show_json").text):
                 st.json(self.localizer.template_json)
             return
