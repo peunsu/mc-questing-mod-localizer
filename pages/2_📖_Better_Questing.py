@@ -16,22 +16,22 @@ set_page_config(
 with st.sidebar:
     LanguageRadio().show()
 
-st.title("Better Questing Localizer")
+st.title(Message("bq_title").text)
 st.caption(Message("version", version=VERSION).text)
 
-st.page_link("Home.py", label="Back to Home", icon="↩️")
+st.page_link("Home.py", label=Message("back_to_home").text, icon="↩️")
 
-st.subheader("Upload Quest File")
+st.subheader(Message("header_upload").text)
 
 json_uploader = FileUploader("json")
 json_uploader.show()
 
-st.subheader("Modpack Name")
+st.subheader(Message("header_modpack_name").text)
 
 modpack_input = ModpackInput()
 modpack_input.show()
 
-st.subheader("Auto Translate")
+st.subheader(Message("header_auto_translate").text)
 
 AutoTranslateRadio().show()
 
@@ -41,7 +41,7 @@ src.show()
 dest = LangSelectBox("dest")
 dest.show()
 
-st.subheader("Localize!")
+st.subheader(Message("header_localize").text)
 
 localizer = BQMQuestLocalizer(json_uploader.files, src.lang, dest.lang, modpack_input.text)
 
@@ -51,7 +51,7 @@ if st.session_state.localize:
     manager = Manager(localizer)
     manager.run()
     
-    st.subheader("How to Apply Localization")
+    st.subheader(Message("header_apply_manual").text)
     
     Message("apply_manual_1", filename="DefaultQuests.json").send()
     manager.download_bqm()
@@ -68,7 +68,7 @@ if st.session_state.localize:
         Message("apply_manual_5_2").send()
     Message("apply_manual_warning", src=src, ext="lang", example="modpack.quest.0.name").warning()
     
-    st.subheader("How to Add New Language Manually")
+    st.subheader(Message("header_add_manual").text)
     
     Message("add_manual_1", ext="lang").send()
     manager.download_lang(template=True)

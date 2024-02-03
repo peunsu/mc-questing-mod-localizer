@@ -28,7 +28,7 @@ class Message:
     stop: bool
     
     def __init__(self, key: str, stop: bool = False, **kwargs):
-        self.message = MESSAGES[st.session_state.lang][key].format(**kwargs)
+        self.message = MESSAGES[st.query_params.lang][key].format(**kwargs)
         self.stop = stop
     
     def __repr__(self) -> str:
@@ -144,12 +144,16 @@ class LanguageRadio:
     def __str__(self) -> str:
         return self.__repr__()
     
+    def on_change(self) -> None:
+        if "lang" in st.session_state:
+            st.query_params.lang = st.session_state.lang
+    
     def show(self) -> None:
         st.radio(
             label = "Site Language",
             options = self.options,
-            index = self.options.index(st.session_state.lang) if "lang" in st.session_state else 0,
             format_func = lambda x: MINECRAFT_LANGUAGES[x],
+            on_change = self.on_change,
             key = "lang"
         )
 

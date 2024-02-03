@@ -10,8 +10,8 @@ def localize_init() -> None:
 def language_init() -> None:
     """Initialize the session state "lang" to "en_us".
     """
-    if 'lang' not in st.session_state:
-        st.session_state.lang = "en_us"
+    if "lang" not in st.query_params:
+        st.query_params.lang = "en_us"
 
 def localize_button() -> None:
     """Set the session state "localize" to True.
@@ -28,14 +28,15 @@ def set_page_config(title: str, icon: str) -> None:
         page_title = title,
         page_icon = icon,
         menu_items = {
-            "Get help": "https://github.com/peunsu/ftbq-localization-tool",
-            "Report a Bug": "https://github.com/peunsu/ftbq-localization-tool/issues",
+            "Get help": "https://github.com/peunsu/mc-questing-mod-localizer",
+            "Report a Bug": "https://github.com/peunsu/mc-questing-mod-localizer/issues",
             "About": '''
-            ### Minecraft Quest Mod Localizer\n
-            Release v{VERSION} ([GitHub](https://github.com/peunsu/ftbq-localization-tool))\n
-            Created by [peunsu](https://github.com/peunsu).\n
-            [FTB Quests](https://www.curseforge.com/minecraft/mc-mods/ftb-quests-forge) by [FTB Team](https://www.curseforge.com/members/ftb).\n
-            [Better Questing](https://www.curseforge.com/minecraft/mc-mods/better-questing) by [Funwayguy](https://www.curseforge.com/members/funwayguy).\n
-            '''.format(VERSION=VERSION)
+            ### Minecraft Questing Mod Localizer\n
+            Minecraft Questing Mod Localizer is a web application that helps you to localize quest files of Minecraft questing mods.\n
+            **[Release v{version}](https://github.com/peunsu/mc-questing-mod-localizer) ⓒ [peunsu](https://github.com/peunsu).**\n
+            ### Credits\n
+            * **[FTB Quests](https://www.curseforge.com/minecraft/mc-mods/ftb-quests-forge) ⓒ [FTB Team](https://www.curseforge.com/members/ftb).**\n
+            * **[Better Questing](https://www.curseforge.com/minecraft/mc-mods/better-questing) ⓒ [Funwayguy](https://www.curseforge.com/members/funwayguy).**\n
+            '''.format(version=VERSION)
         }
     )

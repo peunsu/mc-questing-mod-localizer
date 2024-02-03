@@ -16,22 +16,22 @@ set_page_config(
 with st.sidebar:
     LanguageRadio().show()
 
-st.title("FTB Quests Localizer")
+st.title(Message("ftbq_title").text)
 st.caption(Message("version", version=VERSION).text)
 
-st.page_link("Home.py", label="Back to Home", icon="↩️")
+st.page_link("Home.py", label=Message("back_to_home").text, icon="↩️")
 
-st.subheader("Upload Quest Files")
+st.subheader(Message("header_upload").text)
 
 snbt_uploader = FileUploader("snbt")
 snbt_uploader.show()
 
-st.subheader("Modpack Name")
+st.subheader(Message("header_modpack_name").text)
 
 modpack_input = ModpackInput()
 modpack_input.show()
 
-st.subheader("Auto Translate")
+st.subheader(Message("header_auto_translate").text)
 
 AutoTranslateRadio().show()
 
@@ -41,7 +41,7 @@ src.show()
 dest = LangSelectBox("dest")
 dest.show()
 
-st.subheader("Localize!")
+st.subheader(Message("header_localize").text)
 
 localizer = FTBQuestLocalizer(snbt_uploader.files, src.lang, dest.lang, modpack_input.text)
 
@@ -51,7 +51,7 @@ if st.session_state.localize:
     manager = Manager(localizer)
     manager.run()
     
-    st.subheader("How to Apply Localization")
+    st.subheader(Message("header_apply_manual").text)
     
     Message("apply_manual_1", filename="localized_snbt.zip").send()
     manager.download_snbt()
@@ -68,7 +68,7 @@ if st.session_state.localize:
         Message("apply_manual_5_2").send()
     Message("apply_manual_warning", src=src, ext="json", example="modpack.chapter.title.0.0").warning()
     
-    st.subheader("How to Add New Language Manually")
+    st.subheader(Message("header_add_manual").text)
     
     Message("add_manual_1", ext="json").send()
     manager.download_json(template=True)
