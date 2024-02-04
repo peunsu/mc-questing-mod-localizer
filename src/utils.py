@@ -1,5 +1,12 @@
 import streamlit as st
-from constants import VERSION
+
+__all__ = [
+    "localize_init",
+    "language_init",
+    "localize_button",
+    "reset_localize_button",
+    "set_page_config"
+]
 
 def localize_init() -> None:
     """Initialize the session state "localize" to False.
@@ -33,10 +40,10 @@ def set_page_config(title: str, icon: str) -> None:
             "About": '''
             ### Minecraft Questing Mod Localizer\n
             Minecraft Questing Mod Localizer is a web application that helps you to localize quest files of Minecraft questing mods.\n
-            **[Release v{version}](https://github.com/peunsu/mc-questing-mod-localizer) ⓒ [peunsu](https://github.com/peunsu).**\n
+            **[Release v{__version__}](https://github.com/peunsu/mc-questing-mod-localizer) ⓒ [peunsu](https://github.com/peunsu).**\n
             ### Credits\n
             * **[FTB Quests](https://www.curseforge.com/minecraft/mc-mods/ftb-quests-forge) ⓒ [FTB Team](https://www.curseforge.com/members/ftb).**\n
             * **[Better Questing](https://www.curseforge.com/minecraft/mc-mods/better-questing) ⓒ [Funwayguy](https://www.curseforge.com/members/funwayguy).**\n
-            '''.format(version=VERSION)
+            '''
         }
     )
