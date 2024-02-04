@@ -3,7 +3,16 @@ import re
 import json
 from googletrans.constants import LANGUAGES
 
-VERSION = "1.3.0"
+__all__ = [
+    "MAX_RETRY",
+    "MAX_CHARS",
+    "MAX_FILES",
+    "REGEX",
+    "MESSAGES",
+    "MINECRAFT_LOCALES",
+    "MINECRAFT_LANGUAGES",
+    "MINECRAFT_TO_GOOGLE"
+]
 
 MAX_RETRY = 5
 MAX_CHARS = 32
