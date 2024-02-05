@@ -8,6 +8,8 @@ __all__ = [
     "MAX_CHARS",
     "MAX_FILES",
     "REGEX",
+    "FTBQ",
+    "BQM",
     "MESSAGES",
     "MINECRAFT_LOCALES",
     "MINECRAFT_LANGUAGES",
@@ -18,8 +20,28 @@ MAX_RETRY = 5
 MAX_CHARS = 32
 
 MAX_FILES = {
-    "snbt": 50,
-    "json": 1
+    "ftbq_quest": 50,
+    "bqm_quest": 1,
+    "ftbq_lang": 1,
+    "bqm_lang": 1
+}
+
+FTBQ = {
+    "quest_dir": "config/ftbquests/quests",
+    "lang_dir": "kubejs/assets/kubejs/lang",
+    "quest_ext": "snbt",
+    "lang_ext": "json",
+    "filename": "localized_snbt.zip",
+    "example": "modpack.chapter.title.0.0"
+}
+
+BQM = {
+    "quest_dir": "config/betterquesting",
+    "lang_dir": "resources/betterquesting/lang",
+    "quest_ext": "json",
+    "lang_ext": "lang",
+    "filename": "DefaultQuests.json",
+    "example": "modpack.quest.0.name"
 }
 
 REGEX = {
@@ -27,7 +49,8 @@ REGEX = {
     "subtitle": re.compile(r'(?<=\bsubtitle: )\"(?:[^"\\]|\\.)*\"', flags=re.MULTILINE),
     "description": re.compile(r'(?<=\bdescription: )\[[\s\S.]*?\]\s', flags=re.MULTILINE),
     "string": re.compile(r'(?<=\")(?:(?=\\?)\\?.)*?(?=\")', flags=re.MULTILINE),
-    "strip": re.compile('\W+')
+    "strip": re.compile('\W+'),
+    "lang": re.compile('(.*)=(.*)')
 }
 
 MESSAGES = dict()

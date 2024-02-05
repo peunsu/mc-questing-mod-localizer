@@ -4,9 +4,9 @@ import streamlit_ext as ste
 
 from io import BytesIO
 from .utils import localize_button, reset_localize_button
-from .constants import MINECRAFT_LANGUAGES, MESSAGES, MAX_FILES, MAX_CHARS
+from .constants import MINECRAFT_LANGUAGES, MESSAGES, MAX_FILES, MAX_CHARS, FTBQ, BQM
 
-from typing import Iterator, Iterable, TYPE_CHECKING
+from typing import Iterator, Iterable, Callable, TYPE_CHECKING
 if TYPE_CHECKING:
     from localizer import QuestLocalizer
     from streamlit.delta_generator import DeltaGenerator
@@ -17,7 +17,7 @@ __all__ = [
     "LanguageRadio",
     "FileUploader",
     "ModpackInput",
-    "AutoTranslateRadio",
+    "RadioButton",
     "LangSelectBox",
     "LocalizeButton",
     "DownloadButton",
@@ -35,21 +35,15 @@ class Message:
     
     Attributes
     ----------
-        message (str): The formatted message.
         stop (bool): If True, stop the app after showing the message.
     """
-    message: str
     stop: bool
     
+    _message: str
+    
     def __init__(self, key: str, stop: bool = False, **kwargs):
-        self.message = MESSAGES[st.query_params.lang][key].format(**kwargs)
+        self._message = MESSAGES[st.query_params.lang][key].format(**kwargs)
         self.stop = stop
-    
-    def __repr__(self) -> str:
-        return f"Message(message={self.message}, stop={self.stop})"
-    
-    def __str__(self) -> str:
-        return self.message
     
     @property
     def text(self) -> str:
@@ -59,40 +53,40 @@ class Message:
         -------
             str: The formatted message.
         """
-        return self.message
+        return self._message
     
     def send(self) -> None:
         """Send the message.
         """
-        st.write(self.message)
+        st.write(self._message)
         if self.stop:
             st.stop()
     
     def info(self) -> None:
         """Show the message as an info message.
         """
-        st.info(self.message, icon="ℹ️")
+        st.info(self._message, icon="ℹ️")
         if self.stop:
             st.stop()
     
     def warning(self) -> None:
         """Show the message as a warning message.
         """
-        st.warning(self.message, icon="⚠️")
+        st.warning(self._message, icon="⚠️")
         if self.stop:
             st.stop()
     
     def error(self) -> None:
         """Show the message as an error message.
         """
-        st.error(self.message, icon="❌")
+        st.error(self._message, icon="❌")
         if self.stop:
             st.stop()
     
     def toast(self) -> None:
         """Show the message as a toast message.
         """
-        st.toast(body=self.message, icon="📝")
+        st.toast(body=self._message, icon="📝")
         if self.stop:
             st.stop()
             
@@ -107,39 +101,36 @@ class ProgressBar:
     
     Attributes
     ----------
-        current (int): The current index of the iterable object.
-        len (int): The length of the iterable object.
-        iterator (Iterator): The iterator object of the iterable object.
-        pbar (DeltaGenerator): The progress bar object.
         task (str): The task name.
     """
-    current: int
-    len: int
-    iterator: Iterator
-    pbar: "DeltaGenerator"
     task: str
     
+    _current: int
+    _len: int
+    _iterator: Iterator
+    _pbar: "DeltaGenerator"
+    
     def __init__(self, iterable: Iterable, task: str) -> None:
-        self.current = 0
-        self.len = len(iterable)
-        self.iterator = iter(iterable)
-        self.pbar = st.progress(0)
         self.task = task
+        self._current = 0
+        self._len = len(iterable)
+        self._iterator = iter(iterable)
+        self._pbar = st.progress(0)
     
     def __iter__(self) -> Iterator:
         return self
 
     def __next__(self) -> tuple:
-        element = next(self.iterator)
-        self.current += 1
-        progress = self.current / self.len
+        element = next(self._iterator)
+        self._current += 1
+        progress = self._current / self._len
         
         if self.task == "convert":
             pbar_text = Message("convert_quests", progress=progress*100).text
         elif self.task == "translate":
             pbar_text = Message("translate_quests", progress=progress*100).text
             
-        self.pbar.progress(progress, text=pbar_text)
+        self._pbar.progress(progress, text=pbar_text)
         return element
 
 class LanguageRadio:
@@ -151,12 +142,6 @@ class LanguageRadio:
     """
     def __init__(self) -> None:
         self.options = ["en_us", "ko_kr"]
-    
-    def __repr__(self) -> str:
-        return f"LanguageRadio()"
-    
-    def __str__(self) -> str:
-        return self.__repr__()
     
     def on_change(self) -> None:
         if "lang" in st.session_state:
@@ -180,45 +165,46 @@ class FileUploader:
     
     Attributes
     ----------
-        type (str): The type of the file to upload. (snbt or json)
+        type (str): The type of the file to upload. ("ftbq_quest", "bqm_quest", "ftbq_lang" or "bqm_lang")
         files (list[BytesIO]): The uploaded files.
-        label (str): The key of the label text of the file uploader.
-        info (str): The key of the info text of the file uploader.
     """
     type: str
     files: list[BytesIO]
-    label: str
-    info: str
+    
+    _info: str
+    _ext: str
     
     def __init__(self, type: str) -> None:
         self.type = type
         self.files = []
         
-        if self.type == "snbt":
-            self.label = "uploader_snbt_label"
-            self.info = "uploader_snbt_info"
-        elif self.type == "json":
-            self.label = "uploader_json_label"
-            self.info = "uploader_json_info"
-    
-    def __repr__(self) -> str:
-        return f"FileUploader(type={self.type}, files={self.files}, label={self.label}, info={self.info})"
-    
-    def __str__(self) -> str:
-        return self.__repr__()
+        if self.type == "ftbq_quest":
+            self._info = "uploader_ftbq_quest"
+            self._ext = FTBQ["quest_ext"]
+        elif self.type == "bqm_quest":
+            self._info = "uploader_bqm_quest"
+            self._ext = BQM["quest_ext"]
+        elif self.type == "ftbq_lang":
+            self._info = "uploader_ftbq_lang"
+            self._ext = FTBQ["lang_ext"]
+        elif self.type == "bqm_lang":
+            self._info = "uploader_bqm_lang"
+            self._ext = BQM["lang_ext"]
         
     def show(self) -> None:
         """Show the file uploader.
         """
+        Message(self._info, max=MAX_FILES[self.type]).info()
         self.files = st.file_uploader(
-            label = Message(self.label, max=MAX_FILES[self.type]).text,
-            type = [self.type],
+            label = "Upload file(s).",
+            type = [self._ext],
             accept_multiple_files = True,
             help = Message("uploader_help").text,
-            on_change = reset_localize_button
+            on_change = reset_localize_button,
+            label_visibility="collapsed"
         )
         if self.is_empty():
-            Message(self.info, stop=True).info()
+            st.stop()
         elif self.is_exceed():
             Message("uploader_exceed", max=MAX_FILES[self.type], stop=True).error()
     
@@ -250,12 +236,6 @@ class ModpackInput:
     def __init__(self) -> None:
         pass
     
-    def __repr__(self) -> str:
-        return f"ModpackInput(text={self.text})"
-    
-    def __str__(self) -> str:
-        return self.text
-    
     def show(self) -> None:
         """Show the text input.
         """
@@ -277,23 +257,52 @@ class ModpackInput:
         """
         return not self.text
 
-class AutoTranslateRadio:
-    """Auto Translate Radio Class
+class RadioButton:
+    """Radio Button Class
+    
+    Args
+    ----
+        type (str): The type of the radio button.
+        dir (str, optional): The directory of the language file. Defaults to None, only used for the "lang_exist" type.
+        
+    Attributes
+    ----------
+        type (str): The type of the radio button. ("lang_exist" or "auto_translate")
+        lang_dir (str): The directory of the language file.
     """
-    def __init__(self) -> None:
-        pass
+    type: str
+    lang_dir: str
+    
+    _label: str
+    _help: str
+    _on_change: Callable
+    _key: str
+    
+    def __init__(self, type: str, lang_dir: str = None) -> None:
+        self.type = type
+        self.lang_dir = lang_dir
+        if self.type == "lang_exist":
+            self._label = "lang_exist_label"
+            self._help = "lang_exist_help"
+            self._on_change = None
+            self._key = "lang_exist"
+        elif self.type == "auto_translate":
+            self._label = "auto_translate_label"
+            self._help = "auto_translate_help"
+            self._on_change = reset_localize_button
+            self._key = "translate"
     
     def show(self) -> None:
         """Show the auto translate radio button.
         """
         st.radio(
-            label = Message("auto_translate_label").text,
+            label = Message(self._label, lang_dir=self.lang_dir).text,
             options = [True, False],
             format_func = lambda x: "Yes" if x else "No",
             index = 1,
-            help = Message("auto_translate_help").text,
-            on_change = reset_localize_button,
-            key = "translate"
+            help = Message(self._help).text,
+            on_change = self._on_change,
+            key = self._key
         )
 
 class LangSelectBox:
@@ -306,32 +315,28 @@ class LangSelectBox:
     Attributes
     ----------
         key (str): The key of the select box (src or dest).
-        label (str): The key of the label text of the select box.
-        help (str): The key of the help text of the select box.
-        disabled (bool): If True, disable the select box.
         lang (str): The selected language.
     """
-    value: str
-    label: str
-    help: str
-    disabled: bool
+    key: str
     lang: str
+    
+    _label: str
+    _help: str
+    _disabled: bool
     
     def __init__(self, key: str) -> None:
         self.key = key
+        self.lang = None
         if self.key == "src":
-            self.label = "src_label"
-            self.help = "src_help"
-            self.disabled = False
+            self._label = "src_label"
+            self._help = "src_help"
+            self._disabled = False
         elif self.key == "dest":
-            self.label = "dest_label"
-            self.help = "dest_help"
-            self.disabled = not st.session_state.translate
+            self._label = "dest_label"
+            self._help = "dest_help"
+            self._disabled = not st.session_state.translate
     
-    def __repr__(self) -> str:
-        return f"LangSelectBox(key={self.key}, label={self.label}, help={self.help}, disabled={self.disabled}, lang={self.lang})"
-    
-    def __str__(self) -> str:
+    def __str__(self) -> None:
         return self.lang
     
     def _lang_index(self, lang: str) -> int:
@@ -344,13 +349,13 @@ class LangSelectBox:
         """Show the select box.
         """
         self.lang = st.selectbox(
-            label = Message(self.label).text,
+            label = Message(self._label).text,
             options = MINECRAFT_LANGUAGES,
             index = self._lang_index("en_us"),
             format_func = self._lang_format,
-            help = Message(self.help).text,
+            help = Message(self._help).text,
             on_change = reset_localize_button,
-            disabled = self.disabled
+            disabled = self._disabled
         )
 
 class LocalizeButton:
@@ -358,12 +363,6 @@ class LocalizeButton:
     """
     def __init__(self) -> None:
         pass
-    
-    def __repr__(self) -> str:
-        return f"LocalizeButton()"
-    
-    def __str__(self) -> str:
-        return self.__repr__()
     
     def show(self):
         """Show the localize button.
@@ -395,12 +394,6 @@ class DownloadButton:
         self.data = data
         self.file_name = file_name
     
-    def __repr__(self) -> str:
-        return f"DownloadButton(data={self.data}, file_name={self.file_name})"
-    
-    def __str__(self) -> str:
-        return self.__repr__()
-    
     def show(self) -> None:
         ste.download_button(
             label = Message("download_button", file_name=self.file_name).text,
@@ -414,12 +407,6 @@ class LangLinkButton:
     """
     def __init__(self) -> None:
         pass
-
-    def __repr__(self) -> str:
-        return f"LangLinkButton()"
-    
-    def __str__(self) -> str:
-        return self.__repr__()
     
     def show(self) -> None:
         """Show the language link button.
@@ -429,7 +416,7 @@ class LangLinkButton:
             url = Message("lang_link_url").text,
             help = Message("lang_link_help").text
         )
-        
+
 class Manager:
     """FTB Quests Localization Manager Class
     
@@ -447,16 +434,19 @@ class Manager:
     src: str
     dest: str
     
+    _class: str
+    _ext: str
+    
     def __init__(self, localizer: "QuestLocalizer"):
         self.localizer = localizer
         self.src = localizer.src.lang
         self.dest = localizer.dest.lang
-    
-    def __repr__(self) -> str:
-        return f"Manager(localizer={self.localizer}, src={self.src}, dest={self.dest})"
-
-    def __str__(self) -> str:
-        return self.__repr__()
+        self._class = localizer.__class__.__name__
+        
+        if self._class == "FTBQuestLocalizer":
+            self._ext = FTBQ["lang_ext"]
+        elif self._class == "BQMQuestLocalizer":
+            self._ext = BQM["lang_ext"]
     
     def run(self) -> None:
         """Run the localization.
@@ -482,65 +472,34 @@ class Manager:
         except Exception as e:
             Message("translate_error", stop=True, e=e).error()
 
-    def download_bqm(self) -> None:
-        """Show the download button for the localized BQM file.
+    def download_quest(self) -> None:
+        """Show the download button for the localized quest file.
         """
-        DownloadButton(BytesIO(self.localizer.quest_json.encode("utf-8")), "DefaultQuests.json").show()
-        
-    def download_lang(self, template: bool = False) -> None:
-        """Show the download button for the localized LANG files.
+        if self._class == "FTBQuestLocalizer":
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                zip_name = "localized_snbt.zip"
+                zip_dir = self.localizer.compress_quests(tmp_dir, zip_name)
+                DownloadButton(BytesIO(open(zip_dir, "rb").read()), zip_name).show()
+        elif self._class == "BQMQuestLocalizer":
+            DownloadButton(BytesIO(self.localizer.quest_json.encode("utf-8")), "DefaultQuests.json").show()
+            
+    def download_lang(self, type: str) -> None:
+        """Show the download button for the localized language files.
 
         Args
         ----
-            template (bool, optional): If True, download the template LANG file. Defaults to False.
+            type (str): The type of the LANG file to download. ("src", "dest", "both" or "template")
         """
-        if template:
-            DownloadButton(BytesIO(self.localizer.template_lang.encode("utf-8")), "template.lang").show()
-            with st.expander(Message("show_lang").text):
-                st.code(self.localizer.template_lang)
-            return
+        src_filename = f"{self.src}.{self._ext}"
+        dest_filename = f"{self.dest}.{self._ext}"
+        template_filename = f"template.{self._ext}"
         
-        if st.session_state.translate:
-            DownloadButton(BytesIO(self.localizer.src_lang.encode("utf-8")), f"{self.src}.lang").show()
-            DownloadButton(BytesIO(self.localizer.dest_lang.encode("utf-8")), f"{self.dest}.lang").show()
-            with st.expander(Message("show_lang").text):
-                tab1, tab2 = st.tabs([f"{self.src}.lang", f"{self.dest}.lang"])
-                tab1.code(self.localizer.src_lang)
-                tab2.code(self.localizer.dest_lang)
-        else:
-            DownloadButton(BytesIO(self.localizer.src_lang.encode("utf-8")), f"{self.src}.lang").show()
-            with st.expander(Message("show_lang").text):
-                st.code(self.localizer.src_lang)
-    
-    def download_snbt(self) -> None:
-        """Show the download button for the localized SNBT files.
-        """
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            zip_name = "localized_snbt.zip"
-            zip_dir = self.localizer.compress_quests(tmp_dir, zip_name)
-            DownloadButton(BytesIO(open(zip_dir, "rb").read()), zip_name).show()
-    
-    def download_json(self, template: bool = False) -> None:
-        """Show the download button for the localized JSON files.
-
-        Args
-        ----
-            template (bool, optional): If True, download the template JSON file. Defaults to False.
-        """
-        if template:
-            DownloadButton(BytesIO(self.localizer.template_json.encode("utf-8")), "template.json").show()
-            with st.expander(Message("show_json").text):
-                st.json(self.localizer.template_json)
-            return
-        
-        if st.session_state.translate:
-            DownloadButton(BytesIO(self.localizer.src_json.encode("utf-8")), f"{self.src}.json").show()
-            DownloadButton(BytesIO(self.localizer.dest_json.encode("utf-8")), f"{self.dest}.json").show()
-            with st.expander(Message("show_json").text):
-                tab1, tab2 = st.tabs([f"{self.src}.json", f"{self.dest}.json"])
-                tab1.json(self.localizer.src_json)
-                tab2.json(self.localizer.dest_json)
-        else:
-            DownloadButton(BytesIO(self.localizer.src_json.encode("utf-8")), f"{self.src}.json").show()
-            with st.expander(Message("show_json").text):
-                st.json(self.localizer.src_json)
+        if type == "src":
+            DownloadButton(BytesIO(self.localizer.src_lang.encode("utf-8")), src_filename).show()
+        elif type == "dest":
+            DownloadButton(BytesIO(self.localizer.dest_lang.encode("utf-8")), dest_filename).show()
+        elif type == "both":
+            DownloadButton(BytesIO(self.localizer.src_lang.encode("utf-8")), src_filename).show()
+            DownloadButton(BytesIO(self.localizer.dest_lang.encode("utf-8")), dest_filename).show()
+        elif type == "template":
+            DownloadButton(BytesIO(self.localizer.template_lang.encode("utf-8")), template_filename).show()

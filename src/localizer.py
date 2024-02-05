@@ -5,6 +5,7 @@ import json
 import zipfile
 
 from abc import ABCMeta, abstractmethod
+from overrides import overrides, final
 from io import BytesIO, StringIO
 from time import sleep
 from googletrans import Translator
@@ -22,11 +23,12 @@ __all__ = [
 ]
 
 class QuestLang:
-    """FTB Quests Language Class
+    """Quest Language Class
     
     Args
     ----
         lang (str): The language of the quests.
+        json (dict, optional): The dictionary containing the text.
     
     Attributes
     ----------
@@ -38,16 +40,10 @@ class QuestLang:
     json: dict
     translator: Translator
     
-    def __init__(self, lang: str):
+    def __init__(self, lang: str, json: dict = None) -> None:
         self.lang = lang
-        self.json = dict()
+        self.json = dict() if json is None else json.copy()
         self.translator = Translator()
-    
-    def __repr__(self) -> str:
-        return f"QuestLang(lang={self.lang}, json={self.json})"
-    
-    def __str__(self) -> str:
-        return self.lang
     
     def __eq__(self, other: QuestLang) -> bool:
         return self.lang == other.lang
@@ -63,15 +59,6 @@ class QuestLang:
             bool: True if the language dictionary is empty, False otherwise.
         """
         return not self.json
-
-    def copy_from(self, other: QuestLang) -> None:
-        """Copy the language dictionary from another QuestLang object.
-
-        Args
-        ----
-            other (QuestLang): The QuestLang object to copy from.
-        """
-        self.json = other.json.copy()
     
     def json_to_lang(self, allow_blank: bool = False) -> str:
         """Convert the language dictionary to a LANG file format.
@@ -86,6 +73,26 @@ class QuestLang:
             value = value.replace("\n", "\\n")
             lang += f"{key}={value}\n"
         return lang
+    
+    def load_from_lang(self, lang: str) -> None:
+        """Load the language dictionary from a LANG file.
+
+        Args
+        ----
+            lang (str): The LANG file.
+        """
+        self.json = dict()
+        for line in lang.splitlines():
+            if line.startswith("#") or not line:
+                continue
+            key, value = REGEX["lang"].match(line).groups()
+            self.update(key=key, value=value.replace("\\n", "\n"))
+    
+    def clear_values(self) -> None:
+        """Clear the values of the language dictionary.
+        """
+        for key in self.json.keys():
+            self.update(key=key, value="")
     
     def update(self, key: str, value: str) -> None:
         """Update the language dictionary.
@@ -105,7 +112,7 @@ class QuestLang:
             target (QuestLang): The QuestLang object to translate into.
         """
         if target.is_empty():
-            target.copy_from(self)
+            target.json = self.json.copy()
         if target != self:
             for key, text in ProgressBar(self.json.items(), task="translate"):
                 if text.startswith("[ ") and text.endswith(" ]"):
@@ -130,25 +137,20 @@ class QuestData(metaclass=ABCMeta):
     ----
         data (str): The quest data.
         modpack (str): The modpack name.
+        chapter (str, optional): The chapter name.
     
     Attributes
     ----------
         data (str): The quest data.
         modpack (str): The modpack name.
+        chapter (str): The chapter name.
     """
     data: str
     modpack: str
+    chapter: str
     
     @abstractmethod
-    def __init__(self, data: str, modpack: str) -> None:
-        pass
-    
-    @abstractmethod
-    def __repr__(self) -> str:
-        pass
-    
-    @abstractmethod
-    def __str__(self) -> str:
+    def __init__(self, data: str, modpack: str, chapter: str = None) -> None:
         pass
     
     @abstractmethod
@@ -176,17 +178,13 @@ class FTBQuestData(QuestData):
     modpack: str
     chapter: str
     
+    @overrides
     def __init__(self, data: str, modpack: str, chapter: str) -> None:
         self.data = data
         self.modpack = modpack
         self.chapter = chapter
     
-    def __repr__(self) -> str:
-        return f"FTBQuestData(data={self.data}, modpack={self.modpack}, chapter={self.chapter})"
-
-    def __str__(self) -> str:
-        return self.chapter
-    
+    @overrides
     def convert(self, lang: QuestLang) -> None:
         """Convert the quest data.
 
@@ -221,25 +219,25 @@ class BQMQuestData(QuestData):
     ----
         data (str): The quest data.
         modpack (str): The modpack name.
+        chapter (str, optional): The chapter name.
     
     Attributes
     ----------
         data (str): The quest data.
         modpack (str): The modpack name.
+        chapter (str): The chapter name.
     """
     data: str
     modpack: str
+    chapter: str
     
-    def __init__(self, data: str, modpack: str) -> None:
-        self.data = json.loads(data)
+    @overrides
+    def __init__(self, data: str, modpack: str, chapter: str = None) -> None:
+        self.data = data
         self.modpack = modpack
+        self.chapter = chapter
     
-    def __repr__(self) -> str:
-        return f"BQMQuestData(data={self.data}, modpack={self.modpack})"
-
-    def __str__(self) -> str:
-        return self.modpack
-    
+    @overrides
     def convert(self, lang: QuestLang) -> None:
         """Convert the quest data.
 
@@ -301,10 +299,11 @@ class QuestLocalizer(metaclass=ABCMeta):
 
     Args
     ----
-        quests (list[BytesIO]): The list of BytesIO objects containing the quests.
+        files (list[BytesIO]): The list of BytesIO objects containing the file data.
         src (str): The source language.
         dest (str): The destination language.
-        modpack (str): The modpack name.
+        modpack (str, optional): The modpack name. Defaults to "modpack".
+        translate_only (bool, optional): True if only translating, False otherwise. Defaults to False.
     
     Attributes
     ----------
@@ -312,44 +311,74 @@ class QuestLocalizer(metaclass=ABCMeta):
         dest (QuestLang): The QuestLang object of the destination language.
         modpack (str): The modpack name.
         quests (list[QuestData]): The list of QuestData objects.
+        translate_only (bool): True if only translating, False otherwise.
     """
     src: QuestLang
     dest: QuestLang
     modpack: str
     quests: list[QuestData]
+    translate_only: bool
     
     @abstractmethod
-    def __init__(self, quests: list[BytesIO], src: str, dest: str, modpack: str) -> None:
+    def __init__(self, files: list[BytesIO], src: str, dest: str, modpack: str = "modpack", translate_only: bool = False) -> None:
         pass
     
-    @abstractmethod
-    def __repr__(self) -> str:
-        pass
-
-    @abstractmethod
-    def __str__(self) -> str:
-        pass
-    
+    @final
     def convert_quests(self) -> None:
         """Convert the quests.
         """
+        if self.translate_only:
+            return
+        
         for quest in ProgressBar(self.quests, task="convert"):
             quest.convert(self.src)
     
+    @final
     def translate_quests(self) -> None:
         """Translate the quests.
         """
         self.src.translate(self.dest)
+    
+    @property
+    @abstractmethod
+    def src_lang(self) -> str:
+        """Get the source language string.
+
+        Returns:
+            str: The source language string.
+        """
+        pass
+    
+    @property
+    @abstractmethod
+    def dest_lang(self) -> str:
+        """Get the destination language string.
+
+        Returns:
+            str: The destination language string.
+        """
+        pass
+    
+    @property
+    @abstractmethod
+    def template_lang(self) -> str:
+        """Get the template language string.
+
+        Returns:
+            str: The template language string.
+        """
+        pass
 
 class FTBQuestLocalizer(QuestLocalizer):
     """FTB Quests Localizer Class
 
     Args
     ----
-        quests (list[BytesIO]): The list of BytesIO objects containing the quests.
+        files (list[BytesIO]): The list of BytesIO objects containing the file data.
         src (str): The source language.
         dest (str): The destination language.
-        modpack (str): The modpack name.
+        modpack (str, optional): The modpack name. Defaults to "modpack".
+        translate_only (bool, optional): True if only translating, False otherwise. Defaults to False.
     
     Attributes
     ----------
@@ -357,27 +386,31 @@ class FTBQuestLocalizer(QuestLocalizer):
         dest (QuestLang): The QuestLang object of the destination language.
         modpack (str): The modpack name.
         quests (list[FTBQuestData]): The list of FTBQuestData objects.
+        translate_only (bool): True if only translating, False otherwise.
     """
     src: QuestLang
     dest: QuestLang
     modpack: str
     quests: list[FTBQuestData]
+    translate_only: bool
     
-    def __init__(self, quests: list[BytesIO], src: str, dest: str, modpack: str) -> None:
-        self.src = QuestLang(src)
-        self.dest = QuestLang(dest)
-        self.modpack = REGEX["strip"].sub("", modpack.lower().replace(" ", "_"))
-        self.quests = [FTBQuestData(
-            data = StringIO(quest.getvalue().decode("utf-8")).read(),
-            modpack = self.modpack,
-            chapter = os.path.splitext(quest.name)[0]
-            ) for quest in quests]
-    
-    def __repr__(self) -> str:
-        return f"FTBQuestLocalizer(src={self.src}, dest={self.dest}, modpack={self.modpack}, quests={self.quests})"
-
-    def __str__(self) -> str:
-        return self.modpack
+    @overrides
+    def __init__(self, files: list[BytesIO], src: str, dest: str, modpack: str = "modpack", translate_only: bool = False) -> None:
+        self.translate_only = translate_only
+        if self.translate_only:
+            self.src = QuestLang(src, json=json.loads(StringIO(files[0].getvalue().decode("utf-8")).read()))
+            self.dest = QuestLang(dest)
+            self.modpack = None
+            self.quests = None
+        else:
+            self.src = QuestLang(src)
+            self.dest = QuestLang(dest)
+            self.modpack = REGEX["strip"].sub("", modpack.lower().replace(" ", "_"))
+            self.quests = [FTBQuestData(
+                data = StringIO(quest.getvalue().decode("utf-8")).read(),
+                modpack = self.modpack,
+                chapter = os.path.splitext(quest.name)[0]
+                ) for quest in files]
     
     def compress_quests(self, dir: str, file_name: str = "localized_snbt.zip") -> str:
         """Compress the quests into a zip file.
@@ -398,7 +431,8 @@ class FTBQuestLocalizer(QuestLocalizer):
         return zip_dir
 
     @property
-    def src_json(self) -> str:
+    @overrides
+    def src_lang(self) -> str:
         """Get the JSON string of the source language.
 
         Returns
@@ -406,9 +440,10 @@ class FTBQuestLocalizer(QuestLocalizer):
             str: The JSON string of the source language.
         """
         return json.dumps(self.src.json, indent=4, ensure_ascii=False)
-
+    
     @property
-    def dest_json(self) -> str:
+    @overrides
+    def dest_lang(self) -> str:
         """Get the JSON string of the destination language.
 
         Returns
@@ -416,30 +451,30 @@ class FTBQuestLocalizer(QuestLocalizer):
             str: The JSON string of the destination language.
         """
         return json.dumps(self.dest.json, indent=4, ensure_ascii=False)
-
+    
     @property
-    def template_json(self) -> str:
+    @overrides
+    def template_lang(self) -> str:
         """Get the JSON string of the template language.
 
         Returns
         -------
             str: The JSON string of the template language.
         """
-        temp = QuestLang("template")
-        temp.copy_from(self.src)
-        for k in temp.json.keys():
-            temp.update(key=k, value="")
-        return json.dumps(temp.json, indent=4, ensure_ascii=False)
+        temp = QuestLang("template", self.src.json)
+        temp.clear_values()
+        return json.dumps(temp.json, indent=4, ensure_ascii=False)    
 
 class BQMQuestLocalizer(QuestLocalizer):
     """BQM Quest Localizer Class
 
     Args
     ----
-        quests (list[BytesIO]): The list of BytesIO objects containing the quests.
+        files (list[BytesIO]): The list of BytesIO objects containing the file data.
         src (str): The source language.
         dest (str): The destination language.
-        modpack (str): The modpack name.
+        modpack (str, optional): The modpack name. Defaults to "modpack".
+        translate_only (bool, optional): True if only translating, False otherwise. Defaults to False.
     
     Attributes
     ----------
@@ -453,50 +488,54 @@ class BQMQuestLocalizer(QuestLocalizer):
     modpack: str
     quests: list[BQMQuestData]
     
-    def __init__(self, quests: list[BytesIO], src: str, dest: str, modpack: str) -> None:
-        self.src = QuestLang(src)
-        self.dest = QuestLang(dest)
-        self.modpack = REGEX["strip"].sub("", modpack.lower().replace(" ", "_"))
-        self.quests = [BQMQuestData(
-            data = StringIO(quest.getvalue().decode("utf-8")).read(),
-            modpack = self.modpack
-            ) for quest in quests]
-    
-    def __repr__(self) -> str:
-        return f"FTBQuestLocalizer(src={self.src}, dest={self.dest}, modpack={self.modpack}, quests={self.quests})"
-
-    def __str__(self) -> str:
-        return self.modpack
+    @overrides
+    def __init__(self, files: list[BytesIO], src: str, dest: str, modpack: str = "modpack", translate_only: bool = False) -> None:
+        self.translate_only = translate_only
+        if self.translate_only:
+            self.src = QuestLang(src)
+            self.src.load_from_lang(StringIO(files[0].getvalue().decode("utf-8")).read())
+            self.dest = QuestLang(dest)
+            self.modpack = None
+            self.quests = None
+        else:
+            self.src = QuestLang(src)
+            self.dest = QuestLang(dest)
+            self.modpack = REGEX["strip"].sub("", modpack.lower().replace(" ", "_"))
+            self.quests = [BQMQuestData(
+                data = json.loads(StringIO(quest.getvalue().decode("utf-8")).read()),
+                modpack = self.modpack
+                ) for quest in files]
 
     @property
+    @overrides
     def src_lang(self) -> str:
         """Get the LANG string of the source language.
         Returns
         -------
-            str: 
+            str: The LANG string of the source language.
         """
         return self.src.json_to_lang()
-
+    
     @property
+    @overrides
     def dest_lang(self) -> str:
         """Get the LANG string of the destination language.
         Returns
         -------
-            str: 
+            str: The LANG string of the destination language.
         """
         return self.dest.json_to_lang()
 
     @property
+    @overrides
     def template_lang(self) -> str:
         """Get the LANG string of the template language.
         Returns
         -------
-            str: 
+            str: The LANG string of the template language.
         """
-        temp = QuestLang("template")
-        temp.copy_from(self.src)
-        for k in temp.json.keys():
-            temp.update(key=k, value="")
+        temp = QuestLang("template", self.src.json)
+        temp.clear_values()
         return temp.json_to_lang(allow_blank=True)
     
     @property

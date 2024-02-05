@@ -1,5 +1,5 @@
 import streamlit as st
-from src import language_init, set_page_config, Message
+from src import language_init, set_page_config
 
 language_init()
 
