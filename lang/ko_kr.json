@@ -55,7 +55,7 @@
     "add_manual_3": "3. `{src}.{lang_ext}`의 텍스트를 번역하고, 텍스트 에디터로 `<language>.{lang_ext}`에 번역된 텍스트를 넣으세요. 지금 사용하고 있는 이 로컬라이저 또는 다른 번역기를 사용해서 텍스트를 번역하시면 됩니다.",
     "add_manual_4": "4. `<language>.{lang_ext}`(을)를 `{lang_dir}` 폴더 (또는 원본 `{src}.{lang_ext}` 파일이 위치하는 폴더)에 넣습니다.",
     "add_manual_5": "5. 완료!",
-    "add_manual_warning": "번역한 텍스트는 `{src}.{lang_ext}`에 넣지 말고 반드시 `<language>.{lang_ext}`에 넣어야 합니다",
+    "add_manual_warning": "번역한 텍스트는 `{src}.{lang_ext}`에 넣지 말고 반드시 `<language>.{lang_ext}`에 넣어야 합니다.",
     "lang_link_label": "마인크래프트 언어 목록",
     "lang_link_url": "https://minecraft.fandom.com/wiki/Language#Languages",
     "lang_link_help": "이 링크를 클릭하여 마인크래프트 언어 목록을 확인하세요."
