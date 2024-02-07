@@ -69,9 +69,9 @@ if st.session_state.localize:
             Message("apply_manual_warning", src=src, **BQM).warning()
     else:
         st.subheader(Message("header_apply_manual").text)
-        Message("apply_manual_1", filename="DefaultQuests.json").send()
+        Message("apply_manual_1", **BQM).send()
         manager.download_quest()
-        Message("apply_manual_2_2", filename="DefaultQuests.json", **BQM).send()
+        Message("apply_manual_2_2", **BQM).send()
         if st.session_state.translate:
             Message("apply_manual_3_1", src=src, dest=dest, **BQM).send()
             manager.download_lang("both")
