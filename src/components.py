@@ -477,11 +477,11 @@ class Manager:
         """
         if self._class == "FTBQuestLocalizer":
             with tempfile.TemporaryDirectory() as tmp_dir:
-                zip_name = "localized_snbt.zip"
+                zip_name = FTBQ["filename"]
                 zip_dir = self.localizer.compress_quests(tmp_dir, zip_name)
                 DownloadButton(BytesIO(open(zip_dir, "rb").read()), zip_name).show()
         elif self._class == "BQMQuestLocalizer":
-            DownloadButton(BytesIO(self.localizer.quest_json.encode("utf-8")), "DefaultQuests.json").show()
+            DownloadButton(BytesIO(self.localizer.quest_json.encode("utf-8")), BQM["filename"]).show()
             
     def download_lang(self, type: str) -> None:
         """Show the download button for the localized language files.

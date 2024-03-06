@@ -60,7 +60,7 @@ class QuestLang:
         """
         return not self.json
     
-    def json_to_lang(self, allow_blank: bool = False) -> str:
+    def convert_to_lang(self, allow_blank: bool = False) -> str:
         """Convert the language dictionary to a LANG file format.
 
         Returns:
@@ -514,7 +514,7 @@ class BQMQuestLocalizer(QuestLocalizer):
         -------
             str: The LANG string of the source language.
         """
-        return self.src.json_to_lang()
+        return self.src.convert_to_lang()
     
     @property
     @overrides
@@ -524,7 +524,7 @@ class BQMQuestLocalizer(QuestLocalizer):
         -------
             str: The LANG string of the destination language.
         """
-        return self.dest.json_to_lang()
+        return self.dest.convert_to_lang()
 
     @property
     @overrides
@@ -536,7 +536,7 @@ class BQMQuestLocalizer(QuestLocalizer):
         """
         temp = QuestLang("template", self.src.json)
         temp.clear_values()
-        return temp.json_to_lang(allow_blank=True)
+        return temp.convert_to_lang(allow_blank=True)
     
     @property
     def quest_json(self) -> str:
