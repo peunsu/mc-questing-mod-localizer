@@ -27,3 +27,8 @@ $ pip install -r requirements.txt
 ```bash
 $ streamlit run Home.py
 ```
+
+# Dependency
+* [streamlit](https://github.com/streamlit/streamlit)
+* [googletrans](https://github.com/ssut/py-googletrans)
+* [ftb-snbt-lib](https://github.com/peunsu/ftb-snbt-lib)
