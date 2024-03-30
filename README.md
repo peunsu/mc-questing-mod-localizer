@@ -9,7 +9,7 @@ This application supports [FTB Quests](https://www.curseforge.com/minecraft/mc-m
 * Web App: https://mc-questing-mod-localizer.streamlit.app
 
 # Installation
-* Python 3.9 or higher is required
+* Python 3.10 or higher is required
 * Clone the repo:
 ```bash
 $ git clone https://github.com/peunsu/mc-questing-mod-localizer
