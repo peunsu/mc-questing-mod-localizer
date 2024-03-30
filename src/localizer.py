@@ -115,10 +115,10 @@ class FTBQuestData(QuestData):
         r'"': r'\"'
     }
     
-    def __init__(self, data: str, modpack: str):
+    def __init__(self, data: str, modpack: str, chapter: str):
         self.data = slib.loads(data)
         self.modpack = modpack
-        self.chapter = self.data['filename']
+        self.chapter = chapter
     
     def convert(self, lang: FTBLocale):
         self._convert(lang, self.data, f"{self.modpack}.{self.chapter}")
@@ -310,7 +310,10 @@ class FTBLocalizer(Localizer):
         self.src = FTBLocale(src, self.read(locale_data[0])) if locale_data else FTBLocale(src)
         self.dest = FTBLocale(dest)
         self.modpack = self.modpack_name(modpack)
-        self.quests = [FTBQuestData(self.read(quest), self.modpack) for quest in quest_data]
+        self.quests = [FTBQuestData(self.read(quest), self.modpack, self.chapter_name(quest.name)) for quest in quest_data]
+    
+    def chapter_name(self, name: str) -> str:
+        return re.compile('\W+').sub("", os.path.splitext(name)[0].lower().replace(" ", "_"))
     
     def compress_quests(self, dir: str, file_name: str) -> str:
         zip_dir = os.path.join(dir, file_name)
