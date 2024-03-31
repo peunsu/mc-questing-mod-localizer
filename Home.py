@@ -16,6 +16,7 @@ st.page_link("pages/2_ðŸ“–_Better_Questing.py", label="Better Questing", icon="ð
 st.divider()
 
 st.subheader("About")
+st.write("[![GitHub Release](https://img.shields.io/github/v/release/peunsu/mc-questing-mod-localizer?style=for-the-badge)](https://github.com/peunsu/mc-questing-mod-localizer/releases/latest)")
 st.write("Minecraft Questing Mod Localizer is a web application that helps you to localize quest files of Minecraft questing mods.\
         You can convert quest files to localizable format, translate quest files to other languages, and apply the translated quest files to the modpack.\
         This application supports FTB Quests and Better Questing.")
