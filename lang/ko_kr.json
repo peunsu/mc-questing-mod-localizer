@@ -55,7 +55,7 @@
     "manual_lang_2": "* `{src}.{ext}`(을)를 `{dir}` 폴더 (또는 원본 언어 파일이 위치하는 폴더)에 넣습니다.",
     "manual_lang_3": "* 완료!",
     "manual_lang_warning": "`.{ext}` 파일의 **키값을 절대 변경하지 마세요**. (키값 예시: `{example}`)",
-    "manual_custom_lang_1": "* `template.{ext}`(을)를 다운로드합니다. (아래 다운로드 버튼 클릭)",
+    "manual_custom_lang_1": "* `{src}.{ext}`와 `template.{ext}`(을)를 다운로드합니다. (아래 다운로드 버튼 클릭)",
     "manual_custom_lang_2": "* `template.{ext}`의 파일 이름을 `<language>.{ext}`로 변경합니다. [예시: `en_us.{ext}`]",
     "manual_custom_lang_3": "* `{src}.{ext}`의 텍스트를 번역하고, 텍스트 에디터로 `<language>.{ext}`에 번역된 텍스트를 넣으세요. 지금 사용하고 있는 이 로컬라이저 또는 다른 번역기를 사용해서 텍스트를 번역하시면 됩니다.",
     "manual_custom_lang_4": "* `<language>.{ext}`(을)를 `{dir}` 폴더 (또는 원본 `{src}.{ext}` 파일이 위치하는 폴더)에 넣습니다.",
