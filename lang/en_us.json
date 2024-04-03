@@ -55,7 +55,7 @@
     "manual_lang_2": "* Put `{src}.{ext}` in `{dir}` folder (or the folder where the original lang files are placed).",
     "manual_lang_3": "* Done!",
     "manual_lang_warning": "**Do not change the key** of the `.{ext}` file. (e.g. `{example}`)",
-    "manual_custom_lang_1": "* Download `template.{ext}`. (Click the button below)",
+    "manual_custom_lang_1": "* Download `{src}.{ext}` and `template.{ext}`. (Click the buttons below)",
     "manual_custom_lang_2": "* Rename `template.{ext}` to `<language>.{ext}`. [Example: `en_us.{ext}`]",
     "manual_custom_lang_3": "* Translate the text in `{src}.{ext}` and put the translated text in `<language>.{ext}` with text editor. You may use this localization tool or any translator to translate the text.",
     "manual_custom_lang_4": "* Put `<language>.{ext}` in `{dir}` folder (or the folder where the original `{src}.{ext}` is located).",

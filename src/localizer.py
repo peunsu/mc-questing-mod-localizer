@@ -126,7 +126,7 @@ class FTBQuestData(QuestData):
     def _convert(self, lang: FTBLocale, data: Compound, lang_key: str):
         if not isinstance(data, Compound):
             raise TypeError("The quest data must be a Compound type object")
-        for key in data:
+        for key in filter(lambda x: data[x], data):
             if isinstance(data[key], Compound):
                 self._convert(lang, data[key], f"{lang_key}.{key}")
             elif isinstance(data[key], List) and issubclass(data[key].subtype, Compound):

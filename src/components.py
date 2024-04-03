@@ -366,7 +366,8 @@ class LocalizerManager:
             Message("manual_lang_3").send()
     
     def show_custom_lang_manual(self) -> None:
-        Message("manual_custom_lang_1", ext=self._ext).send()
+        Message("manual_custom_lang_1", src=self.src, ext=self._ext).send()
+        self.show_download_button(self.locale_to_bytesio(self.localizer.src), f"{self.src}.{self._ext}")
         self.show_download_button(self.locale_to_bytesio(self.localizer.template), f"template.{self._ext}")
         Message("manual_custom_lang_2", ext=self._ext).send()
         LangLinkButton().show()
