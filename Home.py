@@ -27,7 +27,7 @@ st.write("마인크래프트 퀘스트 모드 로컬라이저는 마인크래프
 st.subheader("Report a Bug")
 st.write("Currently the FTB Quest Localizer has some issues with newly implemented library `ftb-snbt-lib`.\
         If you encounter any error while using this app, please report it to the developer through the contact information below.")
-st.write("현재 FTB 퀘스트 로컬라이즈에서 `ftb-snbt-lib` 라이브러리와 관련하여 여러 이슈가 발생하고 있습니다.\
+st.write("현재 FTB 퀘스트 로컬라이저에서 `ftb-snbt-lib` 라이브러리와 관련하여 여러 이슈가 발생하고 있습니다.\
         로컬라이저 사용 중에 오류가 발생할 경우, 아래 연락 수단을 통해 개발자에게 제보해주시면 감사드리겠습니다.")
 
 st.subheader("Contact")
