@@ -119,7 +119,14 @@ class FTBQuestData(QuestData):
         self.data = slib.loads(data)
         self.modpack = modpack
         self.chapter = chapter
-    
+
+    def _filter(self, text: str) -> bool:
+        if not text:
+            return False
+        if text.startswith("{") and text.endswith("}"):
+            return False
+        return True
+
     def convert(self, lang: FTBLocale):
         self._convert(lang, self.data, f"{self.modpack}.{self.chapter}")
     
@@ -133,11 +140,11 @@ class FTBQuestData(QuestData):
                 for idx in range(len(data[key])):
                     self._convert(lang, data[key][idx], f"{lang_key}.{key}{idx}")
             if key in ["title", "subtitle", "description"]:
-                if isinstance(data[key], String) and data[key]:
+                if isinstance(data[key], String) and self._filter(data[key]):
                     lang[f"{lang_key}.{key}"] = self._escape_string(data[key])
                     data[key] = slib.String(f"{{{lang_key}.{key}}}")
                 elif isinstance(data[key], List) and issubclass(data[key].subtype, String):
-                    for idx, i in enumerate(filter(lambda x: data[key][x], range(len(data[key])))):
+                    for idx, i in enumerate(filter(lambda x: self._filter(data[key][x]), range(len(data[key])))):
                         lang[f"{lang_key}.{key}{idx}"] = self._escape_string(data[key][i])
                         data[key][i] = slib.String(f"{{{lang_key}.{key}{idx}}}")
     
