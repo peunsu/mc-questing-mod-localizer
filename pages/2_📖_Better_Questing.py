@@ -1,3 +1,4 @@
+import time
 import streamlit as st
 
 from src.utils import *
@@ -43,7 +44,9 @@ dest_sb = DestLangSelectBox()
 dest_sb.show()
 
 Message("header_localize").subheader()
-localizer = BQMLocalizer(locale_uploader.files, quest_uploader.files, src_sb.lang, dest_sb.lang, modpack_input.text)
+with st.spinner('Loading...'):
+    localizer = BQMLocalizer(locale_uploader.files, quest_uploader.files, src_sb.lang, dest_sb.lang, modpack_input.text)
+    time.sleep(1)
 LocalizeButton().show()
 
 if st.session_state.localize:
