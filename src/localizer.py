@@ -125,6 +125,8 @@ class FTBQuestData(QuestData):
             return False
         if text.startswith("{") and text.endswith("}"):
             return False
+        if text.startswith("[") and text.endswith("]"):
+            return False
         return True
 
     def convert(self, lang: FTBLocale):
