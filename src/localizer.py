@@ -300,7 +300,10 @@ class Localizer:
         self.src.translate(self.dest)
     
     def read(self, data: BytesIO) -> str:
-        return StringIO(data.getvalue().decode('utf-8')).read()
+        try:
+            return StringIO(data.getvalue().decode('utf-8')).read()
+        except UnicodeDecodeError:
+            return StringIO(data.getvalue().decode('ISO-8859-1')).read()
 
     def modpack_name(self, name: str) -> str:
         return re.compile('\W+').sub("", name.lower().replace(" ", "_"))
