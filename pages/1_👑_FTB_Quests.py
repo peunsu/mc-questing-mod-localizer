@@ -46,7 +46,7 @@ dest_sb.show()
 Message("header_localize").subheader()
 with st.spinner('Loading...'):
     localizer = FTBLocalizer(locale_uploader.files, quest_uploader.files, src_sb.lang, dest_sb.lang, modpack_input.text)
-    time.sleep(1)
+    time.sleep(2)
 LocalizeButton().show()
 
 if st.session_state.localize:

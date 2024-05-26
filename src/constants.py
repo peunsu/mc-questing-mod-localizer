@@ -3,7 +3,7 @@ import json
 from googletrans.constants import LANGUAGES
 
 MAX_RETRY = 5
-MAX_FTB_QUEST_FILES = 100
+MAX_FTB_QUEST_FILES = 200
 MAX_MODPACK_NAME_LEN = 15
 
 MESSAGES = dict()
