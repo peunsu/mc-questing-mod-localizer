@@ -1,4 +1,5 @@
 import streamlit as st
+import deepl
 
 def localize_init() -> None:
     if 'localize' not in st.session_state:
@@ -8,11 +9,26 @@ def language_init() -> None:
     if "lang" not in st.query_params:
         st.query_params.lang = "en_us"
 
+def translator_init() -> None:
+    if "translator" not in st.session_state:
+        st.session_state.translator = "Google"
+
 def localize_button() -> None:
     st.session_state.localize = True
 
 def reset_localize_button(*args) -> None:
     st.session_state.localize = False
+
+def is_key_valid(auth_key: str) -> bool:
+    if st.session_state.translator == "DeepL":
+        if auth_key:
+            try:
+                deepl.Translator(auth_key).get_usage()
+            except:
+                return False
+        else:
+            return False
+    return True
 
 def set_page_config(title: str, icon: str) -> None:
     st.set_page_config(

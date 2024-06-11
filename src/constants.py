@@ -325,6 +325,55 @@ MINECRAFT_TO_GOOGLE = {
     "zh_tw": "zh-tw"
 }
 
+MINECRAFT_TO_DEEPL = {
+    "ar_sa": "AR",
+    "bg_bg": "BG",
+    "cs_cz": "CS",
+    "da_dk": "DA",
+    "de_at": "DE",
+    "de_ch": "DE",
+    "de_de": "DE",
+    "el_gr": "EL",
+    "en_au": "EN-GB",
+    "en_ca": "EN-US",
+    "en_gb": "EN-GB",
+    "en_nz": "EN-GB",
+    "en_pt": "EN-US",
+    "en_ud": "EN-US",
+    "en_us": "EN-US",
+    "es_ar": "ES",
+    "es_cl": "ES",
+    "es_ec": "ES",
+    "es_es": "ES",
+    "es_mx": "ES",
+    "es_uy": "ES",
+    "es_ve": "ES",
+    "et_ee": "ET",
+    "fi_fi": "FI",
+    "fr_ca": "FR",
+    "fr_fr": "FR",
+    "hu_hu": "HU",
+    "id_id": "ID",
+    "it_it": "IT",
+    "ja_jp": "JA",
+    "ko_kr": "KO",
+    "lt_lt": "LT",
+    "lv_lv": "LV",
+    "nl_nl": "NL",
+    "no_no": "NB",
+    "pl_pl": "PL",
+    "pt_br": "PT-BR",
+    "pt_pt": "PT-PT",
+    "ro_ro": "RO",
+    "ru_ru": "RU",
+    "sk_sk": "SK",
+    "sl_si": "SL",
+    "sv_se": "SV",
+    "tr_tr": "TR",
+    "uk_ua": "UK",
+    "zh_cn": "ZH"
+}
+
 if __name__ == "__main__":
     MINECRAFT_LANGUAGES = dict()
     MINECRAFT_TO_GOOGLE = dict()
