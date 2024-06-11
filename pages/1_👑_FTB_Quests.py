@@ -2,18 +2,23 @@ import time
 import streamlit as st
 
 from src.utils import *
-from src.localizer import FTBLocalizer
+from src.localizer import FTBLocalizer, Translator
 from src.components import *
 
 localize_init()
 language_init()
+translator_init()
 
 set_page_config(
     title = "FTB Quests Localizer",
     icon = "https://media.forgecdn.net/avatars/275/363/637261948352026071.png"
 )
 
-LanguageRadio().show()
+with st.sidebar:
+    LanguageRadio().show()
+    TranslatorRadio().show()
+    deepl_key_input = DeepLKeyInput()
+    deepl_key_input.show()
 
 Message("ftbq_title").title()
 HomeButton().show()
@@ -44,8 +49,12 @@ dest_sb = DestLangSelectBox()
 dest_sb.show()
 
 Message("header_localize").subheader()
+if not is_key_valid(deepl_key_input.auth_key):
+    Message("deepl_key_check", stop=True).warning()
+    
 with st.spinner('Loading...'):
-    localizer = FTBLocalizer(locale_uploader.files, quest_uploader.files, src_sb.lang, dest_sb.lang, modpack_input.text)
+    translator = Translator().get_translator(st.session_state.translator, deepl_key_input.auth_key)
+    localizer = FTBLocalizer(locale_uploader.files, quest_uploader.files, translator, src_sb.lang, dest_sb.lang, modpack_input.text)
     time.sleep(2)
 LocalizeButton().show()
 

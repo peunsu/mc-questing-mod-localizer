@@ -1,3 +1,4 @@
+import deepl
 import tempfile
 import streamlit as st
 import streamlit_ext as ste
@@ -94,14 +95,45 @@ class LanguageRadio:
     options: list = ["en_us", "ko_kr"]
     
     def show(self) -> None:
-        with st.sidebar:
-            lang = st.radio(
-                label = "Site Language",
-                options = self.options,
-                format_func = lambda x: MINECRAFT_LANGUAGES[x]
-            )
-            st.query_params.lang = lang
+        lang = st.radio(
+            label = "Site Language",
+            options = self.options,
+            format_func = lambda x: MINECRAFT_LANGUAGES[x]
+        )
+        st.query_params.lang = lang
+        
+class TranslatorRadio:
+    options: list = ["Google", "DeepL"]
     
+    def show(self) -> None:
+        st.radio(
+            label = "Translator Service",
+            options = self.options,
+            index = 0,
+            key = "translator",
+            on_change = reset_localize_button
+        )
+
+class DeepLKeyInput:
+    def show(self) -> None:
+        self.auth_key = st.text_input(
+            label = Message("deepl_key_label").text,
+            help = Message("deepl_key_help").text,
+            type = "password",
+            on_change = reset_localize_button,
+            disabled = st.session_state.translator != "DeepL"
+        )
+        if st.session_state.translator == "DeepL":
+            if self.auth_key:
+                try:
+                    usage = deepl.Translator(self.auth_key).get_usage()
+                    st.progress(usage.character.count / usage.character.limit, text=f"Characters used: {usage.character.count}/{usage.character.limit}")
+                except:
+                    Message("deepl_key_error").error()
+            else:
+                Message("deepl_key_empty").info()
+        st.caption(Message("deepl_key_caption").text)
+        
 class HomeButton:
     def show(self) -> None:
         st.page_link(
@@ -244,12 +276,16 @@ class LangSelectBox(metaclass=ABCMeta):
     
     def __init__(self) -> None:
         self.lang = None
+        if st.session_state.translator == "Google":
+            self.lang_list = list(MINECRAFT_TO_GOOGLE)
+        elif st.session_state.translator == "DeepL":
+            self.lang_list = list(MINECRAFT_TO_DEEPL)
     
     def __str__(self) -> None:
         return self.lang
     
     def lang_index(self, lang: str) -> int:
-        return list(MINECRAFT_LANGUAGES).index(lang)
+        return list(self.lang_list).index(lang)
 
     def lang_format(self, lang: str) -> str:
         return f"{lang} ({MINECRAFT_LANGUAGES[lang]})"
@@ -257,7 +293,7 @@ class LangSelectBox(metaclass=ABCMeta):
     def show(self) -> None:
         self.lang = st.selectbox(
             label = Message(self._label).text,
-            options = MINECRAFT_LANGUAGES,
+            options = self.lang_list,
             index = self.lang_index("en_us"),
             format_func = self.lang_format,
             help = Message(self._help).text,
@@ -320,18 +356,18 @@ class LocalizerManager:
     def convert(self) -> None:
         try:
             self.localizer.convert()
-            Message("convert_success").toast()
         except Exception as e:
             Message("convert_error", stop=True, e=e).error()
+        Message("convert_success").toast()
     
     def translate(self) -> None:
         if self.src == self.dest:
             Message("translate_same_lang", stop=True).error()
         try:
             self.localizer.translate()
-            Message("translate_success").toast()
         except Exception as e:
             Message("translate_error", stop=True, e=e).error()
+        Message("translate_success").toast()
     
     def show_manual(self) -> None:
         st.divider()

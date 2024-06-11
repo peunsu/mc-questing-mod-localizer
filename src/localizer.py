@@ -4,15 +4,70 @@ import json
 import zipfile
 import ftb_snbt_lib as slib
 
+import deepl
+import googletrans
+
 from abc import abstractmethod
 from time import sleep
 from io import BytesIO, StringIO
-from googletrans import Translator
 from ftb_snbt_lib.tag import *
 
 from src.components import ProgressBar
 from src.constants import *
 
+class Translator:
+    @abstractmethod
+    def __init__(self):
+        pass
+    
+    def get_translator(self, name: str, auth_key: str = None) -> "Translator":
+        if name == "Google":
+            return GoogleTranslator()
+        elif name == "DeepL":
+            if not auth_key:
+                raise ValueError("DeepL translator requires an authentication key")
+            return DeepLTranslator(auth_key)
+        else:
+            raise ValueError("Invalid translator name")
+    
+    def escape_color_code(self, text: str) -> str:
+        return re.sub(r"(&[0-9a-z])", r"<\g<0>>", text)
+    
+    def unescape_color_code(self, text: str) -> str:
+        return re.sub(r"(<&[0-9a-z]>)", lambda x: x.group(0)[1:-1], text)
+    
+    @abstractmethod
+    def _translate(self, text: str, dest: str) -> str:
+        pass
+    
+    def translate(self, text: str, dest: str) -> str:
+        retry_count = 0
+        while True:
+            try:
+                input = self.escape_color_code(text)
+                output = self._translate(input, dest)
+                return self.unescape_color_code(output)
+            except Exception as e:
+                retry_count += 1
+                if retry_count == MAX_RETRY:
+                    raise e
+                sleep(3)
+        
+    
+class GoogleTranslator(Translator):
+    def __init__(self):
+        self.translator = googletrans.Translator()
+    
+    def _translate(self, text: str, dest: str) -> str:
+        return self.translator.translate(text, dest=MINECRAFT_TO_GOOGLE[dest]).text
+
+class DeepLTranslator(Translator):
+    def __init__(self, auth_key: str):
+        self.translator = deepl.Translator(auth_key)
+    
+    def _translate(self, text: str, dest: str) -> str:
+        return self.translator.translate_text(text, target_lang=MINECRAFT_TO_DEEPL[dest], preserve_formatting=True).text
+    
 class Locale:
     data: dict
     lang: str
@@ -31,24 +86,16 @@ class Locale:
     def __delitem__(self, key: str) -> None:
         self.data.__delitem__(key)
         
-    def translate(self, target: "FTBLocale") -> None:
+    def translate(self, translator: Translator, target: "Locale") -> None:
         if target.lang == self.lang:
             return
         for key, text in ProgressBar(self.data.items(), task="translate"):
             if text.startswith("[ ") and text.endswith(" ]"):
                 target[key] = text
-            target[key] = self._translate(target, text)
+            target[key] = self._translate(translator, text, target)
     
-    def _translate(self, target: "FTBLocale", text: str) -> str:
-        retry_count = 0
-        while True:
-            try:
-                return self.translator.translate(text, dest=MINECRAFT_TO_GOOGLE[target.lang]).text
-            except Exception as e:
-                retry_count += 1
-                if retry_count == MAX_RETRY:
-                    raise e
-                sleep(3)
+    def _translate(self, translator: Translator, text: str, target: "Locale") -> str:
+        return translator.translate(text, dest=target.lang)
                 
     @property
     def template(self) -> "Locale":
@@ -283,13 +330,14 @@ class BQMQuestDataV3(BQMQuestData):
             self._convert_questlines(lang, idx, properties)
 
 class Localizer:
+    translator: Translator
     src: Locale
     dest: Locale
     modpack: str
     quests: list[QuestData]
     
     @abstractmethod
-    def __init__(self, locale_data: list[BytesIO], quest_data: list[BytesIO], src: str, dest: str, modpack: str):
+    def __init__(self, locale_data: list[BytesIO], quest_data: list[BytesIO], translator: Translator, src: str, dest: str, modpack: str):
         pass
     
     def convert(self):
@@ -297,7 +345,7 @@ class Localizer:
             quest.convert(self.src)
     
     def translate(self):
-        self.src.translate(self.dest)
+        self.src.translate(self.translator, self.dest)
     
     def read(self, data: BytesIO) -> str:
         try:
@@ -313,12 +361,14 @@ class Localizer:
         return self.src.template
 
 class FTBLocalizer(Localizer):
+    translator: Translator
     src: FTBLocale
     dest: FTBLocale
     modpack: str
     quests: list[FTBQuestData]
     
-    def __init__(self, locale_data: list[BytesIO], quest_data: list[BytesIO], src: str, dest: str, modpack: str):
+    def __init__(self, locale_data: list[BytesIO], quest_data: list[BytesIO], translator: Translator, src: str, dest: str, modpack: str):
+        self.translator = translator
         self.src = FTBLocale(src, self.read(locale_data[0])) if locale_data else FTBLocale(src)
         self.dest = FTBLocale(dest)
         self.modpack = self.modpack_name(modpack)
@@ -335,12 +385,14 @@ class FTBLocalizer(Localizer):
         return zip_dir
 
 class BQMLocalizer(Localizer):
+    translator: Translator
     src: BQMLocale
     dest: BQMLocale
     modpack: str
     quests: list[BQMQuestData]
     
-    def __init__(self, locale_data: list[BytesIO], quest_data: list[BytesIO], src: str, dest: str, modpack: str):
+    def __init__(self, locale_data: list[BytesIO], quest_data: list[BytesIO], translator: Translator, src: str, dest: str, modpack: str):
+        self.translator = translator
         self.src = BQMLocale(src, self.read(locale_data[0])) if locale_data else BQMLocale(src)
         self.dest = BQMLocale(dest)
         self.modpack = self.modpack_name(modpack)
