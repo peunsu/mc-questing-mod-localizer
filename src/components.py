@@ -115,6 +115,16 @@ class TranslatorRadio:
         )
 
 class DeepLKeyInput:
+    def validate_key(self):
+        if self.auth_key:
+            try:
+                self.usage = deepl.Translator(self.auth_key).get_usage()
+            except:
+                return False
+        else:
+            return False
+        return True
+    
     def show(self) -> None:
         self.auth_key = st.text_input(
             label = Message("deepl_key_label").text,
@@ -124,20 +134,17 @@ class DeepLKeyInput:
             disabled = st.session_state.translator != "DeepL"
         )
         if st.session_state.translator == "DeepL":
-            if self.auth_key:
-                try:
-                    usage = deepl.Translator(self.auth_key).get_usage()
-                    st.progress(usage.character.count / usage.character.limit, text=f"Characters used: {usage.character.count}/{usage.character.limit}")
-                except:
-                    Message("deepl_key_error").error()
+            if self.validate_key():
+                usage = self.usage
+                st.progress(usage.character.count / usage.character.limit, text=f"Characters used: {usage.character.count}/{usage.character.limit}")
             else:
-                Message("deepl_key_empty").info()
+                Message("deepl_key_error").warning()
         st.caption(Message("deepl_key_caption").text)
         
 class HomeButton:
     def show(self) -> None:
         st.page_link(
-            page = "Home.py",
+            page = "home.py",
             label = Message("back_to_home").text,
             icon = "↩️"
         )

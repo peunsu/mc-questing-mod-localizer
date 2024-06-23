@@ -6,16 +6,9 @@ from src.localizer import BQMLocalizer, Translator
 from src.components import *
 
 localize_init()
-language_init()
 translator_init()
 
-set_page_config(
-    title = "Better Questing Localizer",
-    icon = "https://media.forgecdn.net/avatars/30/140/635857624698238672.png"
-)
-
 with st.sidebar:
-    LanguageRadio().show()
     TranslatorRadio().show()
     deepl_key_input = DeepLKeyInput()
     deepl_key_input.show()
@@ -49,7 +42,7 @@ dest_sb = DestLangSelectBox()
 dest_sb.show()
 
 Message("header_localize").subheader()
-if not is_key_valid(deepl_key_input.auth_key):
+if st.session_state.translator == "DeepL" and not deepl_key_input.validate_key():
     Message("deepl_key_check", stop=True).warning()
 
 with st.spinner('Loading...'):
