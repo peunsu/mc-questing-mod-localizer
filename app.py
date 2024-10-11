@@ -3,12 +3,13 @@ from src import language_init, LanguageRadio
 
 home_page = st.Page("home.py", title="Home", icon="🏠")
 ftbq_page = st.Page("localizers/1_ftbq.py", title="FTB Quests", icon="👑")
-bqm_page = st.Page("localizers/2_bqm.py", title="Better Questing", icon="📖")
+ftbq_renewal_page = st.Page("localizers/2_ftbq_renewal.py", title="FTB Quests 1.21+ (WIP)", icon="🚧")
+bqm_page = st.Page("localizers/3_bqm.py", title="Better Questing", icon="📖")
 
 pg = st.navigation(
     {
         "Main": [home_page],
-        "Localizers": [ftbq_page, bqm_page]
+        "Localizers": [ftbq_page, ftbq_renewal_page, bqm_page]
     }
 )
 
