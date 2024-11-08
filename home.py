@@ -4,7 +4,7 @@ from src.components import Message
 st.title(Message("home_title").text)
 
 st.page_link("localizers/1_ftbq.py", label="FTB Quests", icon="👑")
-st.page_link("localizers/2_ftbq_renewal.py", label="FTB Quests 1.21+ (WIP)", icon="🚧")
+st.page_link("localizers/2_ftbq_renewal.py", label="FTB Quests 1.21+ (Beta)", icon="⭐")
 st.page_link("localizers/3_bqm.py", label="Better Questing", icon="📖")
 
 st.divider()

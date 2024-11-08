@@ -31,10 +31,10 @@ class Translator:
             raise ValueError("Invalid translator name")
     
     def escape_color_code(self, text: str) -> str:
-        return re.sub(r"(&[0-9a-z])", r"<\g<0>>", text)
-    
-    def unescape_color_code(self, text: str) -> str:
-        return re.sub(r"(<&[0-9a-z]>)", lambda x: x.group(0)[1:-1], text)
+        output = re.sub(r"(&[^0-9a-fk-or])", lambda x: x.group(0).replace("&", r"\&"), text)
+        if output.endswith("&"):
+            output = output[:-1] + r"\&"
+        return output
     
     @abstractmethod
     def _translate(self, text: str, dest: str) -> str:
@@ -44,9 +44,7 @@ class Translator:
         retry_count = 0
         while True:
             try:
-                input = self.escape_color_code(text)
-                output = self._translate(input, dest)
-                return self.unescape_color_code(output)
+                return self.escape_color_code(self._translate(text, dest))
             except Exception as e:
                 retry_count += 1
                 if retry_count == MAX_RETRY:
@@ -90,12 +88,16 @@ class Locale:
         if target.lang == self.lang:
             return
         for key, text in ProgressBar(self.data.items(), task="translate"):
-            if text.startswith("[ ") and text.endswith(" ]"):
-                target[key] = text
             target[key] = self._translate(translator, text, target)
     
     def _translate(self, translator: Translator, text: str, target: "Locale") -> str:
-        return translator.translate(text, dest=target.lang)
+        if not text:
+            return text
+        if text.startswith("[ ") and text.endswith(" ]"):
+            return text
+        if text.startswith("{") and text.endswith("}"):
+            return text
+        return translator.translate(text, dest=target.lang).replace("& ", r"\& ")
                 
     @property
     def template(self) -> "Locale":
@@ -112,6 +114,37 @@ class FTBLocale(Locale):
         self.data = json.loads(default_data) if default_data else dict()
         self.lang = lang
         self.translator = Translator()
+
+class FTBRenewalLocale(Locale):
+    data: dict
+    lang: str
+    translator: Translator
+    
+    def __init__(self, lang: str, default_data: str = None):
+        self.data = slib.loads(default_data) if default_data else Compound()
+        self.lang = lang
+        self.translator = Translator()
+    
+    def translate(self, translator: Translator, target: "FTBRenewalLocale") -> None:
+        if target.lang == self.lang:
+            return
+        for key, value in ProgressBar(self.data.items(), task="translate"):
+            if isinstance(value, String):
+                target[key] = String(self._translate(translator, value, target))
+            elif isinstance(value, List) and issubclass(value.subtype, String):
+                target[key]  = List([String('')] * len(value))
+                for idx, val in enumerate(value):
+                    target[key][idx] = String(self._translate(translator, val, target))
+    
+    @property
+    def template(self) -> "FTBRenewalLocale":
+        _template = self.__class__(self.lang)
+        for key, value in self.data.items():
+            if isinstance(value, String):
+                _template[key] = String('')
+            elif isinstance(value, List) and issubclass(value.subtype, String):
+                _template[key] = List([String('')] * len(value))
+        return _template
 
 class BQMLocale(Locale):
     data: dict
@@ -383,6 +416,19 @@ class FTBLocalizer(Localizer):
             for quest in self.quests:
                 zip_obj.writestr(f"{quest.chapter}.snbt", slib.dumps(quest.data))
         return zip_dir
+    
+class FTBRenewalLocalizer(Localizer):
+    translator: Translator
+    src: FTBLocale
+    dest: FTBLocale
+    
+    def __init__(self, locale_data: list[BytesIO], quest_data: list[BytesIO], translator: Translator, src: str, dest: str, modpack: str):
+        self.translator = translator
+        self.src = FTBRenewalLocale(src, self.read(locale_data[0])) if locale_data else FTBRenewalLocale(src)
+        self.dest = FTBRenewalLocale(dest)
+    
+    def convert(self):
+        return
 
 class BQMLocalizer(Localizer):
     translator: Translator
