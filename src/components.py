@@ -2,6 +2,7 @@ import deepl
 import tempfile
 import streamlit as st
 import streamlit_ext as ste
+import ftb_snbt_lib as slib
 
 from abc import ABCMeta, abstractmethod
 from io import BytesIO
@@ -84,9 +85,9 @@ class ProgressBar:
         progress = self.current / self.len
         
         if self.task == "convert":
-            pbar_text = Message("convert_quests", progress=progress*100).text
+            pbar_text = Message("convert_quests", current=self.current, len=self.len, progress=progress*100).text
         elif self.task == "translate":
-            pbar_text = Message("translate_quests", progress=progress*100).text
+            pbar_text = Message("translate_quests", current=self.current, len=self.len, progress=progress*100).text
             
         self.pbar.progress(progress, text=pbar_text)
         return element
@@ -180,6 +181,12 @@ class FTBLocaleUploader(FileUploader):
     _msg_key: str = "uploader_ftbq_lang"
     _header_key: str = "header_upload_lang"
     _ext: str = "json"
+    _max_files: int = 1
+
+class FTBRenewalLocaleUploader(FileUploader):
+    _msg_key: str = "uploader_ftbq_renewal_lang"
+    _header_key: str = "header_upload_lang"
+    _ext: str = "snbt"
     _max_files: int = 1
 
 class BQMLocaleUploader(FileUploader):
@@ -449,6 +456,18 @@ class FTBLocalizerManager(LocalizerManager):
     @staticmethod
     def locale_to_bytesio(locale: "Locale") -> BytesIO:
         return BytesIO(json.dumps(locale.data, indent=4, ensure_ascii=False).encode("utf-8"))
+
+class FTBRenewalLocalizerManager(LocalizerManager):
+    _ext: str = "snbt"
+    _dir: str = "config/ftbquests/quests/lang"
+    _example: str = "chapter.01B56BD678E7745B.title"
+    
+    def show_quest_manual(self) -> None:
+        return
+
+    @staticmethod
+    def locale_to_bytesio(locale: "Locale") -> BytesIO:
+        return BytesIO(slib.dumps(locale.data).encode("utf-8"))
 
 class BQMLocalizerManager(LocalizerManager):
     _ext: str = "lang"

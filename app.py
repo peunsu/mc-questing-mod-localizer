@@ -3,7 +3,7 @@ from src import language_init, LanguageRadio
 
 home_page = st.Page("home.py", title="Home", icon="🏠")
 ftbq_page = st.Page("localizers/1_ftbq.py", title="FTB Quests", icon="👑")
-ftbq_renewal_page = st.Page("localizers/2_ftbq_renewal.py", title="FTB Quests 1.21+ (WIP)", icon="🚧")
+ftbq_renewal_page = st.Page("localizers/2_ftbq_renewal.py", title="FTB Quests 1.21+ (Beta)", icon="⭐")
 bqm_page = st.Page("localizers/3_bqm.py", title="Better Questing", icon="📖")
 
 pg = st.navigation(
@@ -13,7 +13,7 @@ pg = st.navigation(
     }
 )
 
-st.logo("static/logo.png")
+st.logo("static/logo.png", icon_image="static/icon.png")
 
 st.set_page_config(
         page_title = "Minecraft Questing Mod Localizer",
