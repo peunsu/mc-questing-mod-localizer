@@ -1,4 +1,5 @@
 import streamlit as st
+from streamlit_extras.buy_me_a_coffee import button
 from src import language_init, LanguageRadio
 
 home_page = st.Page("home.py", title="Home", icon="🏠")
@@ -39,5 +40,7 @@ st.set_page_config(
 language_init()
 with st.sidebar:
     LanguageRadio().show()
+    
+button(username="peunsu")
 
 pg.run()
