@@ -382,7 +382,7 @@ class Localizer:
     
     def read(self, data: BytesIO) -> str:
         try:
-            return StringIO(data.getvalue().decode('utf-8')).read()
+            return StringIO(data.getvalue().decode('utf-8-sig')).read()
         except UnicodeDecodeError:
             return StringIO(data.getvalue().decode('ISO-8859-1')).read()
 
