@@ -10,7 +10,7 @@ MESSAGES = dict()
 for filename in os.listdir("lang"):
     base, ext = os.path.splitext(filename)
     if ext == ".json":
-        MESSAGES[base] = json.load(open(f"lang/{filename}", "r", encoding="utf-8"))
+        MESSAGES[base] = json.load(open(f"lang/{filename}", "r", encoding="utf-8-sig"))
 
 MINECRAFT_LOCALES = [
     "af_za",
