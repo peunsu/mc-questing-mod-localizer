@@ -8,6 +8,7 @@
     "ftbq_title": "FTB Quests 로컬라이저",
     "ftbq_renewal_title": "FTB Quests 1.21+ 로컬라이저 (Beta)",
     "bqm_title": "Better Questing 로컬라이저",
+    "mods_title": "모드 로컬라이저 (개발 중)",
     "deepl_key_label": "DeepL API 키",
     "deepl_key_help": "DeepL API 키를 입력하세요.",
     "deepl_key_caption": "API 키는 어디에도 저장되지 않으며 번역에만 사용됩니다. **API 키를 절대 다른 사람과 공유하지 마세요.**\n\nAPI 키를 얻으려면 [DeepL API](https://www.deepl.com/pro-api)에 방문하여 DeepL 계정을 생성하세요.",

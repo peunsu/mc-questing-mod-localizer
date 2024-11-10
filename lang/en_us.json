@@ -8,6 +8,7 @@
     "ftbq_title": "FTB Quests Localizer",
     "ftbq_renewal_title": "FTB Quests 1.21+ Localizer (Beta)",
     "bqm_title": "Better Questing Localizer",
+    "mods_title": "Mods Localizer (WIP)",
     "deepl_key_label": "DeepL API Key",
     "deepl_key_help": "Enter your DeepL API key.",
     "deepl_key_caption": "Your API key is not stored anywhere and is only used for translation. **Do not share your API key with others.**\n\nTo get your API key, visit [DeepL API](https://www.deepl.com/pro-api) and sign up for a DeepL account.",
