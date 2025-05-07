@@ -1,6 +1,5 @@
 import streamlit as st
 from streamlit_extras.buy_me_a_coffee import button
-from src import language_init, LanguageRadio
 
 home_page = st.Page("home.py", title="Home", icon="🏠")
 ftbq_page = st.Page("localizers/1_ftbq.py", title="FTB Quests Localizer", icon="👑")
@@ -8,12 +7,15 @@ ftbq_renewal_page = st.Page("localizers/2_ftbq_renewal.py", title="FTB Quests 1.
 bqm_page = st.Page("localizers/3_bqm.py", title="Better Questing Localizer", icon="📖")
 mods_page = st.Page("localizers/4_mods.py", title="Mods Localizer (WIP)", icon="🛠️")
 
+test_page = st.Page("localizers/5_ftbq_v3.py", title="Test Page", icon="🧪")
+
 pg = st.navigation(
     {
         "Main": [home_page],
         "FTB Quests": [ftbq_page, ftbq_renewal_page],
         "Better Questing": [bqm_page],
         "Mods": [mods_page],
+        "Test": [test_page],
     }
 )
 
@@ -40,9 +42,23 @@ st.set_page_config(
         }
     )
 
-language_init()
+if st.context.locale == "ko-KR":
+    st.session_state.language = "ko-KR"
+else:
+    st.session_state.language = "en-US"
+
 with st.sidebar:
-    LanguageRadio().show()
+    language_selector = st.pills(
+        "Site Language",
+        options=["en-US", "ko-KR"],
+        selection_mode="single",
+        default=st.session_state.language,
+        format_func=lambda x: {
+            "en-US": "English",
+            "ko-KR": "한국어",
+        }[x]
+    )
+    st.session_state.language = language_selector
     
 button(username="peunsu")
 

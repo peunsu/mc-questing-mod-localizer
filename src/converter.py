@@ -167,16 +167,16 @@ class BQMQuestConverter(QuestConverter):
     def _update_quest(self, properties: dict, idx: int, name_key: str, desc_key: str):
         name, desc = self._get_property(properties, name_key, desc_key)
         
-        self.lang_dict[f"{self.modpack}.quests{idx}.name"] = name
-        self.lang_dict[f"{self.modpack}.quests{idx}.desc"] = desc
-        properties[name_key] = f"{self.modpack}.quests{idx}.name"
-        properties[desc_key] = f"{self.modpack}.quests{idx}.desc"
+        self.lang_dict[f"{self.modpack_name}.quests{idx}.name"] = name
+        self.lang_dict[f"{self.modpack_name}.quests{idx}.desc"] = desc
+        properties[name_key] = f"{self.modpack_name}.quests{idx}.name"
+        properties[desc_key] = f"{self.modpack_name}.quests{idx}.desc"
     
     def _update_questline(self, properties: dict, idx: int, name_key: str, desc_key: str):
         name, desc = self._get_property(properties, name_key, desc_key)
         
-        self.lang_dict[f"{self.modpack}.questlines{idx}.name"] = name
-        self.lang_dict[f"{self.modpack}.questlines{idx}.desc"] = desc
-        properties[name_key] = f"{self.modpack}.questlines{idx}.name"
-        properties[desc_key] = f"{self.modpack}.questlines{idx}.desc"
+        self.lang_dict[f"{self.modpack_name}.questlines{idx}.name"] = name
+        self.lang_dict[f"{self.modpack_name}.questlines{idx}.desc"] = desc
+        properties[name_key] = f"{self.modpack_name}.questlines{idx}.name"
+        properties[desc_key] = f"{self.modpack_name}.questlines{idx}.desc"
     

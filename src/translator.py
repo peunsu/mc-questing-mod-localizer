@@ -24,16 +24,16 @@ class Translator:
         retry_count = 0
         retry_delay = 3
         while True:
+            input_text = self._escape_color_code(text)
             try:
-                input = self._escape_color_code(text)
-                output = self._translate(input)
-                return self._unescape_color_code(output)
+                output_text = self._translate(input_text)
             except Exception as e:
                 retry_count += 1
                 if retry_count == 5:
                     raise e
                 time.sleep(retry_delay)
                 retry_delay *= 2
+            return self._unescape_color_code(output_text)
     
     @abstractmethod
     def _translate(self, text: str) -> str:
@@ -48,13 +48,14 @@ class GoogleTranslator(Translator):
         return self.translator.translate(text, dest=MINECRAFT_TO_GOOGLE[self.target_lang]).text
 
 class DeepLTranslator(Translator):
-    def __init__(self, target_lang: str, api_key: str):
-        self.translator = deepl.Translator(api_key)
+    def __init__(self, target_lang: str, auth_key: str):
+        self.translator = deepl.DeepLClient(auth_key)
         self.target_lang = target_lang
     
     def _translate(self, text: str) -> str:
         return self.translator.translate_text(
-            text,
+            text=text,
             target_lang=MINECRAFT_TO_DEEPL[self.target_lang],
-            preserve_formatting=True
+            context="This is a Minecraft quest text, so please keep the color codes and formatting intact. Example of color codes: &a, &b, &1, &2, &l, &r. Example Translation: <&a>Hello <&b>Minecraft! -> <&a>안녕하세요 <&b>마인크래프트!",
+            preserve_formatting=True,
         ).text

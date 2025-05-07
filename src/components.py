@@ -20,7 +20,7 @@ class Message:
     stop: bool
     
     def __init__(self, key: str, stop: bool = False, **kwargs):
-        self.message = MESSAGES[st.query_params.lang][key].format(**kwargs)
+        self.message = MESSAGES[st.session_state.language][key].format(**kwargs)
         self.stop = stop
     
     @property
