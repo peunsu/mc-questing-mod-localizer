@@ -6,6 +6,7 @@ from abc import abstractmethod
 
 import ftb_snbt_lib as slib
 from ftb_snbt_lib import tag
+from src.utils import read_file
 
 class QuestConverter():
     def __init__(self, modpack_name: str, quest_arr: list[BytesIO]):
@@ -13,8 +14,8 @@ class QuestConverter():
         self.quest_arr = [self._read(quest) for quest in quest_arr]
         self.lang_dict = {}
     
-    @abstractmethod
     @staticmethod
+    @abstractmethod
     def _read(quest: BytesIO) -> tuple:
         pass
     
@@ -27,11 +28,7 @@ class FTBQuestConverter(QuestConverter):
     def _read(quest: BytesIO) -> tuple[str, tag.Compound]:
         quest_name = re.compile('\W+').sub("", os.path.splitext(quest.name)[0].lower().replace(" ", "_"))
         
-        try:
-            quest_data = StringIO(quest.getvalue().decode('utf-8')).read()
-        except UnicodeDecodeError:
-            quest_data = StringIO(quest.getvalue().decode('ISO-8859-1')).read()
-            
+        quest_data = read_file(quest)
         quest_data = slib.loads(quest_data)
         if not isinstance(quest_data, tag.Compound):
             raise TypeError("The quest data must be a Compound tag object")
@@ -79,11 +76,7 @@ class FTBQuestConverter(QuestConverter):
 class BQMQuestConverter(QuestConverter):
     @staticmethod
     def _read(quest: BytesIO) -> tuple[int, dict]:
-        try:
-            quest_data = StringIO(quest.getvalue().decode('utf-8')).read()
-        except UnicodeDecodeError:
-            quest_data = StringIO(quest.getvalue().decode('ISO-8859-1')).read()
-            
+        quest_data = read_file(quest)
         quest_data = json.loads(quest_data)
         if not isinstance(quest_data, dict):
             raise TypeError("The quest data must be a json object")

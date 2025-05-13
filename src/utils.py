@@ -1,3 +1,4 @@
+from io import StringIO, BytesIO
 import streamlit as st
 
 def localize_init() -> None:
@@ -17,3 +18,9 @@ def localize_button() -> None:
 
 def reset_localize_button(*args) -> None:
     st.session_state.localize = False
+
+def read_file(file: BytesIO) -> str:
+    try:
+        return StringIO(file.getvalue().decode('utf-8')).read()
+    except UnicodeDecodeError:
+        return StringIO(file.getvalue().decode('ISO-8859-1')).read()

@@ -27,7 +27,7 @@
     "select_task_convert_no_translate": "**퀘스트 파일을 변환**하여 언어 파일을 생성하지만 **번역은 하지 않습니다**.",
     "select_task_translate_only": "이미 존재하는 **언어 파일만 번역합니다**.",
     "expander_select_task_label": "무엇을 골라야 할지 모르겠어요.",
-    "expander_select_task": "텍스트 에디터로 모드팩의 퀘스트 파일을 열고 퀘스트의 **`title` (또는 `name`)과 `description` 값**을 확인해보세요.\n\n만약 그 값들이 **일반 텍스트**로 되어 있다면, **첫 번째 또는 두 번째 옵션**을 선택하세요.\n\n만약 그 값들이 **`modpack.quest.name`과 같은 형식의 텍스트**로 되어 있다면, **세 번째 옵션**을 선택하세요.",
+    "expander_select_task": "텍스트 에디터로 모드팩의 퀘스트 파일을 열고 퀘스트의 **`title` (또는 `name`)과 `description` 값**을 확인해보세요.\n\n- 만약 그 값들이 **일반 텍스트**로 되어 있다면, **첫 번째 또는 두 번째 옵션**을 선택하세요.\n\n- 만약 그 값들이 **`modpack.quest.name`과 같은 형식의 텍스트**로 되어 있다면, **세 번째 옵션**을 선택하세요.",
     "expander_check_label": "모드팩의 퀘스트 파일과 언어 파일은 어디에 있나요?",
     "expander_check_ftbq": "퀘스트 파일 (`.snbt`)은 **`config/ftbquests/quests`** 폴더에, 언어 파일 (`.json`)은 **`kubejs/assets/kubejs/lang`** 폴더에 있습니다.\n\n**모드팩마다 폴더 위치가 다를 수 있습니다.**",
     "expander_check_bqm": "퀘스트 파일 (`DefaultQuests.json`)은 **`config/betterquesting`** 폴더에, 언어 파일 (`.lang`)은 **`resources/betterquesting/lang`** 폴더에 있습니다.\n\n**모드팩마다 폴더 위치가 다를 수 있습니다.**",

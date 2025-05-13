@@ -27,7 +27,7 @@
     "select_task_convert_no_translate": "**Convert** the quest files to generate the language files but **do not translate it**.",
     "select_task_translate_only": "**Only translates** the existing language file.",
     "expander_select_task_label": "I don't know what should I choose.",
-    "expander_select_task": "Open your modpack's quest files with your text editor and check out **the `title` (or `name`) and `description` values** of the quests.\n\nIf these values are **plain text**, the **first or second** option is recommended.\n\nIf these values are **formatted text like `modpack.quest.name`**, the **third** option is recommended.",
+    "expander_select_task": "Open your modpack's quest files with your text editor and check out **the `title` (or `name`) and `description` values** of the quests.\n\n- If these values are **plain text**, the **first or second** option is recommended.\n\n- If these values are **formatted text like `modpack.quest.name`**, the **third** option is recommended.",
     "expander_check_label": "Where are the modpack's quest files and language files?",
     "expander_check_ftbq": "The quest files (`.snbt`) are in the **`config/ftbquests/quests`** folder and the language files (`.json`) are in the **`kubejs/assets/kubejs/lang`** folder.\n\n**The directory may vary depending on the modpack.**",
     "expander_check_bqm": "The quest file (`DefaultQuests.json`) is in the **`config/betterquesting`** folder and the language files (`.lang`) are in the **`resources/betterquesting/lang`** folder.\n\n**The directory may vary depending on the modpack.**",
