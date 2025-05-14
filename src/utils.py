@@ -24,3 +24,6 @@ def read_file(file: BytesIO) -> str:
         return StringIO(file.getvalue().decode('utf-8')).read()
     except UnicodeDecodeError:
         return StringIO(file.getvalue().decode('ISO-8859-1')).read()
+
+def write_file(data: str) -> BytesIO:
+    return BytesIO(data.encode('utf-8'))

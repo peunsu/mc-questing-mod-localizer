@@ -5,7 +5,7 @@ from src.components import *
 from src.constants import *
 from src.converter import FTBQuestConverter
 from src.translator import GoogleTranslator, DeepLTranslator
-from src.utils import read_file
+from src.utils import read_file, write_file
 
 with st.sidebar:
     deepl_key = st.text_input(
@@ -112,16 +112,17 @@ with st.container(border=True):
     if st.session_state.do_translate:
         st.subheader("Translator Options")
         
-        translator = st.pills(
+        translator_service = st.pills(
             label = "Select a translator service.",
             options = ["Google", "DeepL"],
             default = "Google",
-            key = "translator",
+            key = "translator_service",
         )
         
-        if translator == "Google":
+        if translator_service == "Google":
             lang_list = list(MINECRAFT_TO_GOOGLE)
-        elif translator == "DeepL":
+            translator = GoogleTranslator()
+        elif translator_service == "DeepL":
             if deepl_key:
                 try:
                     with st.spinner("Checking your API key..."):
@@ -138,6 +139,7 @@ with st.container(border=True):
                 st.info("Please enter your API key in the sidebar to proceed.")
                 st.stop()
             lang_list = list(MINECRAFT_TO_DEEPL)
+            translator = DeepLTranslator(auth_key=deepl_key)
         
         source_lang = st.selectbox(
             label = Message("src_label").text,
@@ -155,20 +157,23 @@ with st.container(border=True):
 
 button = st.button("Start")
 
-if button:
+if button:    
     if st.session_state.do_convert:
-        converter = FTBQuestConverter(
-            modpack_name=modpack_name,
-            quest_arr=quest_files
+        converter = FTBQuestConverter(modpack_name, quest_files)
+        converted_quest_files, lang_dict = converter.convert()
+        
+        if st.session_state.lang_exists:
+            lang_dict += json.loads(read_file(lang_file))
+            
+        source_lang_filename = f"{source_lang}.json"
+        source_lang_download = st.download_button(
+            label = source_lang_filename,
+            data = write_file(json.dumps(lang_dict, indent=4)),
+            file_name = source_lang_filename,
+            on_click = "ignore",
+            mime = "application/octet-stream"
         )
-        converted_quest_arr, lang_dict = converter.convert()
-        lang_dict += json.loads(read_file(lang_file))
         
     if st.session_state.do_translate:
-        if translator == "Google":
-            translator = GoogleTranslator(target_lang=target_lang)
-        elif translator == "DeepL":
-            translator = DeepLTranslator(target_lang=target_lang, auth_key=deepl_key)
-        
-        for key, value in lang_dict.items():
-            lang_dict[key] = translator.translate(value)
+        for key, text in lang_dict.items():
+            lang_dict[key] = translator.translate(text, target_lang)
