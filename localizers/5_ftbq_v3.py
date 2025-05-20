@@ -1,6 +1,9 @@
 import json
 import deepl
 import streamlit as st
+from zipfile import ZipFile
+from tempfile import TemporaryDirectory
+from stqdm import stqdm
 from src.components import *
 from src.constants import *
 from src.converter import FTBQuestConverter
@@ -154,26 +157,62 @@ with st.container(border=True):
             index = lang_list.index("en_us"),
             format_func = lambda x: f"{x} ({MINECRAFT_LANGUAGES[x]})"
         )
-
-button = st.button("Start")
-
-if button:    
-    if st.session_state.do_convert:
-        converter = FTBQuestConverter(modpack_name, quest_files)
-        converted_quest_files, lang_dict = converter.convert()
         
-        if st.session_state.lang_exists:
-            lang_dict += json.loads(read_file(lang_file))
+        if source_lang == target_lang:
+            Message("translate_same_lang").warning()
+            st.stop()
+
+button = st.button("Start", type="primary", use_container_width=True)
+
+if button:
+    status = st.status("Localizing quests...", expanded=True)
+    
+    source_lang_dict = json.loads(read_file(lang_file)) if st.session_state.lang_exists else {}
+    target_lang_dict = {}
+    
+    if st.session_state.do_convert:
+        status.write("Converting quests...")
+        
+        converter = FTBQuestConverter(modpack_name, quest_files)
+        converter.lang_dict.update(source_lang_dict)
+        converted_quest_arr, source_lang_dict = converter.convert()
+        
+    if st.session_state.do_translate:
+        status.write("Translating quests...")
+        
+        for key, text in stqdm(source_lang_dict.items(), desc="Translating", backend=False, frontend=True, unit="line"):
+            target_lang_dict[key] = translator.translate(text, target_lang)
+    
+    status.success("Done!")
+    
+    if st.session_state.do_convert:
+        with TemporaryDirectory() as temp_dir:
+            zip_filename = "quests.zip"
+            zip_dir = converter.compress(temp_dir, zip_filename)
             
+            quest_zip_download = st.download_button(
+                label = zip_filename,
+                data = open(zip_dir, "rb"),
+                file_name = zip_filename,
+                on_click = "ignore",
+                mime = "application/zip"
+            )
+        
         source_lang_filename = f"{source_lang}.json"
         source_lang_download = st.download_button(
             label = source_lang_filename,
-            data = write_file(json.dumps(lang_dict, indent=4)),
+            data = json.dumps(converter.lang_dict, indent=4),
             file_name = source_lang_filename,
             on_click = "ignore",
-            mime = "application/octet-stream"
+            mime = "application/json"
         )
-        
+    
     if st.session_state.do_translate:
-        for key, text in lang_dict.items():
-            lang_dict[key] = translator.translate(text, target_lang)
+        target_lang_filename = f"{target_lang}.json"
+        target_lang_download = st.download_button(
+            label = target_lang_filename,
+            data = json.dumps(target_lang_dict, indent=4),
+            file_name = target_lang_filename,
+            on_click = "ignore",
+            mime = "application/json"
+        )

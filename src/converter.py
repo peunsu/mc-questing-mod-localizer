@@ -1,10 +1,11 @@
 import re
 import os
 import json
-from io import BytesIO, StringIO
-from abc import abstractmethod
-
 import ftb_snbt_lib as slib
+
+from abc import abstractmethod
+from io import BytesIO, StringIO
+from zipfile import ZipFile
 from ftb_snbt_lib import tag
 from src.utils import read_file
 
@@ -72,6 +73,13 @@ class FTBQuestConverter(QuestConverter):
         for match, seq in ((r'%', r'%%'), (r'"', r'\"')):
             quest_str = quest_str.replace(match, seq)
         return quest_str
+    
+    def compress(self, dir: str, filename: str) -> str:
+        zip_dir = os.path.join(dir, filename)
+        with ZipFile(zip_dir, "w") as zip_file:
+            for quest_name, quest_data in self.quest_arr:
+                zip_file.writestr(f"{quest_name}.snbt", slib.dumps(quest_data))
+        return zip_dir
 
 class BQMQuestConverter(QuestConverter):
     @staticmethod

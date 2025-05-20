@@ -18,7 +18,9 @@ class Translator:
     
     @staticmethod
     def _unescape_color_code(text: str) -> str:
-        return re.sub(r"(<&[0-9a-z]>)", lambda x: x.group(0)[1:-1], text)
+        text = re.sub(r"(<&[0-9a-z]>)", lambda x: x.group(0)[1:-1], text)
+        text = re.sub(r"&(?=[^0-9a-z]|$)", r"\&", text)
+        return text
     
     def translate(self, text: str, target_lang: str) -> str:
         retry_count = 0
