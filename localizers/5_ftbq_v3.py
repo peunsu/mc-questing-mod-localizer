@@ -1,5 +1,6 @@
 import json
 import deepl
+import asyncio
 import streamlit as st
 from zipfile import ZipFile
 from tempfile import TemporaryDirectory
@@ -112,6 +113,7 @@ if st.session_state.lang_exists and not lang_file:
     st.stop()
     
 with st.container(border=True):
+    lang_list = list(MINECRAFT_LANGUAGES)
     if st.session_state.do_translate:
         st.subheader("Translator Options")
         
@@ -143,21 +145,24 @@ with st.container(border=True):
                 st.stop()
             lang_list = list(MINECRAFT_TO_DEEPL)
             translator = DeepLTranslator(auth_key=deepl_key)
-        
-        source_lang = st.selectbox(
-            label = Message("src_label").text,
-            options = lang_list,
-            index = lang_list.index("en_us"),
-            format_func = lambda x: f"{x} ({MINECRAFT_LANGUAGES[x]})"
-        )
-        
+
+with st.container(border=True):
+    st.subheader("Language Options")
+    source_lang = st.selectbox(
+        label = Message("src_label").text,
+        options = lang_list,
+        index = lang_list.index("en_us"),
+        format_func = lambda x: f"{x} ({MINECRAFT_LANGUAGES[x]})"
+    )
+    
+    if st.session_state.do_translate:
         target_lang = st.selectbox(
             label = Message("dest_label").text,
             options = lang_list,
             index = lang_list.index("en_us"),
             format_func = lambda x: f"{x} ({MINECRAFT_LANGUAGES[x]})"
         )
-        
+    
         if source_lang == target_lang:
             Message("translate_same_lang").warning()
             st.stop()
@@ -171,19 +176,19 @@ if button:
     target_lang_dict = {}
     
     if st.session_state.do_convert:
-        status.write("Converting quests...")
-        
+        status.write("**Step 1.** Converting quests...")
         converter = FTBQuestConverter(modpack_name, quest_files)
         converter.lang_dict.update(source_lang_dict)
         converted_quest_arr, source_lang_dict = converter.convert()
         
     if st.session_state.do_translate:
-        status.write("Translating quests...")
-        
-        for key, text in stqdm(source_lang_dict.items(), desc="Translating", backend=False, frontend=True, unit="line"):
-            target_lang_dict[key] = translator.translate(text, target_lang)
-    
-    status.success("Done!")
+        status.write("**Step 2.** Translating quests... (It may take a long time - **Do not exit the page!**)")
+        if source_lang_dict:
+            asyncio.run(translator.translate(source_lang_dict, target_lang_dict, target_lang, status))
+
+    status.success("Done!", icon="✅")
+
+    st.subheader("Downloads")
     
     if st.session_state.do_convert:
         with TemporaryDirectory() as temp_dir:
@@ -201,7 +206,7 @@ if button:
         source_lang_filename = f"{source_lang}.json"
         source_lang_download = st.download_button(
             label = source_lang_filename,
-            data = json.dumps(converter.lang_dict, indent=4),
+            data = json.dumps(converter.lang_dict, indent=4, ensure_ascii=False),
             file_name = source_lang_filename,
             on_click = "ignore",
             mime = "application/json"
@@ -211,7 +216,7 @@ if button:
         target_lang_filename = f"{target_lang}.json"
         target_lang_download = st.download_button(
             label = target_lang_filename,
-            data = json.dumps(target_lang_dict, indent=4),
+            data = json.dumps(target_lang_dict, indent=4, ensure_ascii=False),
             file_name = target_lang_filename,
             on_click = "ignore",
             mime = "application/json"

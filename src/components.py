@@ -47,6 +47,11 @@ class Message:
         if self.stop:
             st.stop()
     
+    def success(self) -> None:
+        st.success(self.message, icon="✅")
+        if self.stop:
+            st.stop()
+    
     def toast(self) -> None:
         st.toast(body=self.message, icon="📝")
         if self.stop:
