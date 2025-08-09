@@ -181,3 +181,19 @@ class BQMQuestConverter(QuestConverter):
         properties[name_key] = f"{self.modpack_name}.questlines{idx}.name"
         properties[desc_key] = f"{self.modpack_name}.questlines{idx}.desc"
     
+class SNBTConverter:
+    @staticmethod
+    def convert_snbt_to_json(tag: slib.Compound) -> dict:
+        return json.loads(json.dumps(tag, ensure_ascii=False))
+
+    @staticmethod
+    def convert_json_to_snbt(data: dict) -> slib.Compound:
+        output = slib.Compound()
+        for key, value in data.items():
+            if isinstance(value, str):
+                output[key] = slib.String(value)
+            elif isinstance(value, list):
+                output[key]  = slib.List([slib.String('')] * len(value))
+                for idx, val in enumerate(value):
+                    output[key][idx] = slib.String(val)
+        return output

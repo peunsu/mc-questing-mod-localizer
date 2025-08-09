@@ -3,6 +3,7 @@ import json
 import asyncio
 import tiktoken
 from abc import abstractmethod
+from flatten_json import flatten, unflatten_list
 from tenacity import retry, stop_after_attempt, wait_exponential
 from src.utils import stqdm_asyncio
 
@@ -23,12 +24,14 @@ class Translator:
     
     @staticmethod
     def _escape_color_code(text: str) -> str:
+        text = re.sub(r"(\\n)", r"<br>", text)
         return re.sub(r"(&[0-9a-z])", lambda x: f"<{x.group(0)[1:]}>", text)
     
     @staticmethod
     def _unescape_color_code(text: str) -> str:
-        text = re.sub(r"(<[0-9a-z]>)", lambda x: f"&{x.group(0)[1:-1]}", text)
+        text = re.sub(r"(<[0-9a-zA-Z]>)", lambda x: f"&{x.group(0)[1:-1].lower()}", text)
         text = re.sub(r"&(?=[^0-9a-z]|$)", r"\&", text)
+        text = re.sub(r"(<br>|<BR>)", r"\\n", text)
         return text
 
     @staticmethod
@@ -63,10 +66,17 @@ class Translator:
                 return await self._translate(text, target_lang)
         
         try:
-            batches = self.make_batches(source_lang_dict, max_tokens=6000)
-            result = await stqdm_asyncio.gather(*[wrap_translate(batch) for batch in batches], desc="Progress", st_container=status, backend=False, frontend=True)
-            for res in result:
-                target_lang_dict.update(res)
+            source_lang_dict_flatten = flatten(source_lang_dict, separator="|")
+            
+            batches = self.make_batches(source_lang_dict_flatten, max_tokens=6000)
+            batches_out = await stqdm_asyncio.gather(*[wrap_translate(batch) for batch in batches], desc="Progress", st_container=status, backend=False, frontend=True)
+            
+            result = {}
+            for out in batches_out:
+                result.update(out)
+            result = unflatten_list(result, separator="|")
+            
+            target_lang_dict.update(result)
         except Exception as e:
             status.update(label="An error occurred during translation.", state="error")
             status.write(e)
@@ -81,9 +91,24 @@ class GoogleTranslator(Translator):
     
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=8, max=32))
     async def _translate(self, batch: dict, target_lang: str) -> dict:
-        batch_input = [self._escape_color_code(value) for value in batch.values()]
-        batch_output = await self.translator.translate(batch_input, dest=MINECRAFT_TO_GOOGLE[target_lang])
-        return {key: self._unescape_color_code(value.text) for key, value in zip(batch.keys(), batch_output)}
+        batch_input_keys = []
+        batch_input_values = []
+        batch_original = {}
+        batch_translated = {}
+        
+        for key, value in batch.items():
+            if value.startswith("[") and value.endswith("]"):
+                batch_original[key] = value
+            elif value.startswith("{") and value.endswith("}"):
+                batch_original[key] = value
+            else:
+                batch_input_keys.append(key)
+                batch_input_values.append(self._escape_color_code(value))
+
+        if batch_input_values:
+            batch_output = await self.translator.translate(batch_input_values, dest=MINECRAFT_TO_GOOGLE[target_lang])
+            batch_translated = {key: self._unescape_color_code(value.text) for key, value in zip(batch_input_keys, batch_output)}
+        return {**batch_original, **batch_translated}
 
 class DeepLTranslator(Translator):
     def __init__(self, auth_key: str):
@@ -91,14 +116,29 @@ class DeepLTranslator(Translator):
     
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=8, max=32))
     async def _translate(self, batch: dict, target_lang: str) -> dict:
-        batch_input = [self._escape_color_code(value) for value in batch.values()]
-        batch_output = self.translator.translate_text(
-            text=batch_input,
-            target_lang=MINECRAFT_TO_DEEPL[target_lang],
-            context="This is a Minecraft quest text, so please keep the color codes and formatting intact. Example of color codes: <a>, <b>, <1>, <2>, <l>, <r>. Example Translation: <a>Hello <b>Minecraft! -> <a>안녕하세요 <b>마인크래프트!",
-            preserve_formatting=True,
-        )
-        return {key: self._unescape_color_code(value.text) for key, value in zip(batch.keys(), batch_output)}
+        batch_input_keys = []
+        batch_input_values = []
+        batch_original = {}
+        batch_translated = {}
+        
+        for key, value in batch.items():
+            if value.startswith("[") and value.endswith("]"):
+                batch_original[key] = value
+            elif value.startswith("{") and value.endswith("}"):
+                batch_original[key] = value
+            else:
+                batch_input_keys.append(key)
+                batch_input_values.append(self._escape_color_code(value))
+
+        if batch_input_values:
+            batch_output = self.translator.translate_text(
+                text=batch_input_values,
+                target_lang=MINECRAFT_TO_DEEPL[target_lang],
+                context="This is a Minecraft quest text, so please keep the color codes and formatting intact. Example of color codes: <a>, <b>, <1>, <2>, <l>, <r>. Example of formatting: \\\\n. Example Translation: <a>Hello \\\\n<b>Minecraft! -> <a>안녕하세요 \\\\n<b>마인크래프트!",
+                preserve_formatting=True
+            )
+            batch_translated = {key: self._unescape_color_code(value.text) for key, value in zip(batch_input_keys, batch_output)}
+        return {**batch_original, **batch_translated}
 
 class GeminiTranslator(Translator):
     def __init__(self, auth_key: str):
@@ -113,15 +153,16 @@ class GeminiTranslator(Translator):
         prompt = PromptTemplate(
             template="""You are a Minecraft modpack quest translation assistant.
             Your task is to translate the given JSON-formatted text.
-            Translate the values into {target_lang}, but KEEP THE KEYS EXACTLY THE SAME.
             Be aware that what you are translating is a quest text for Minecraft modpack.
             You MUST keep the color codes INTACT. Example of color codes: &a, &b, &1, &2, &l, &r.
+            You MUST keep the new line symbol (\\\\n) INTACT.
+            You MUST keep the text encased in [ ] or {{ }}.
             If there are words that are difficult or ambiguous to translate, translate them PHONETICALLY. Also, transcribe proper nouns PHONETICALLY.
-            Example translation:
+            Translation Examples (en_us -> ko_kr):
             - &aDiamond Pickaxe&r -> &a다이아몬드 곡괭이&r
             - While the &aUpgrade Template&r is not needed to make the initial tool, it will save you a lot of &6Allthemodium Ingots&r! -> &a업그레이드 템플릿&r은 초기 도구를 만드는 데 필요하지 않지만, &6올더모듐 주괴&r를 많이 절약할 수 있습니다!
             Format instructions: {format_instructions}
-            Translate the following JSON-formatted text to {target_lang}:
+            Translate the following JSON-formatted text to {target_lang}, but KEEP THE KEYS EXACTLY THE SAME:
             ```json
             {query}
             ```""",

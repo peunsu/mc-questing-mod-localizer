@@ -1,50 +1,147 @@
-import time
+import json
+import asyncio
 import streamlit as st
-
-from src.utils import *
-from src.localizer import FTBRenewalLocalizer, Translator
+import ftb_snbt_lib as slib
+from tempfile import TemporaryDirectory
 from src.components import *
-
-localize_init()
-translator_init()
-
-st.session_state.translate_only = True
-st.session_state.translate = True
+from src.constants import *
+from src.converter import SNBTConverter
+from src.translator import GoogleTranslator, DeepLTranslator, GeminiTranslator
+from src.utils import read_file, check_deepl_key, check_gemini_key
 
 with st.sidebar:
-    TranslatorRadio().show()
-    deepl_key_input = DeepLKeyInput()
-    deepl_key_input.show()
+    deepl_key = st.text_input(
+        label = Message("deepl_key_label").text,
+        type = "password",
+        key = "deepl_key",
+        help = Message("deepl_key_help").text
+    )
+    gemini_key = st.text_input(
+        label = "Gemini API Key",
+        type = "password",
+        key = "gemini_key",
+        help = Message("gemini_key_help").text
+    )
+    Message("api_key_caption").caption()
 
-Message("ftbq_renewal_title").title()
-HomeButton().show()
+Message("ftbq_new_title").title()
+st.page_link(
+    page = "home.py",
+    label = Message("back_to_home").text,
+    icon = "↩️"
+)
 
 st.divider()
 
-st.subheader(Message("home_new_title").text)
-st.write(Message("home_new_desc").text)
+Message("ftbq_new_readme").info()
 
-st.divider()
+with st.container(border=True):
+    Message("upload_lang_header").subheader()
+    lang_file = st.file_uploader(
+        label = Message("upload_lang_label_ftbq_new").text,
+        type = ["snbt"],
+        accept_multiple_files=False
+    )
 
-locale_uploader = FTBRenewalLocaleUploader()
-locale_uploader.show()
+if not lang_file:
+    st.stop()
+    
+with st.container(border=True):
+    lang_list = list(MINECRAFT_LANGUAGES)
+    
+    st.subheader("Settings")
+    
+    translator_service = st.pills(
+        label = Message("select_translator_label").text,
+        options = ["Google", "DeepL", "Gemini"],
+        default = "Google",
+        key = "translator_service",
+    )
+    
+    match translator_service:
+        case "Google":
+            lang_list = list(MINECRAFT_TO_GOOGLE)
+            translator = GoogleTranslator()
+        case "DeepL":
+            if not deepl_key:
+                Message("api_key_empty", stop=True).info()
+            if not check_deepl_key(deepl_key):
+                Message("api_key_invalid", stop=True).error()
+            lang_list = list(MINECRAFT_TO_DEEPL)
+            translator = DeepLTranslator(auth_key=deepl_key)
+        case "Gemini":
+            if not gemini_key:
+                Message("api_key_empty", stop=True).info()
+            if not check_gemini_key(gemini_key):
+                Message("api_key_invalid", stop=True).error()
+            translator = GeminiTranslator(auth_key=gemini_key)
 
-src_sb = SrcLangSelectBox()
-src_sb.show()
-dest_sb = DestLangSelectBox()
-dest_sb.show()
+    source_lang = st.selectbox(
+        label = Message("select_source_lang_label").text,
+        options = lang_list,
+        index = lang_list.index("en_us"),
+        format_func = lambda x: f"{x} ({MINECRAFT_LANGUAGES[x]})"
+    )
+    
+    target_lang = st.selectbox(
+        label = Message("select_target_lang_label").text,
+        options = lang_list,
+        index = lang_list.index("en_us"),
+        format_func = lambda x: f"{x} ({MINECRAFT_LANGUAGES[x]})"
+    )
 
-Message("header_localize").subheader()
-if st.session_state.translator == "DeepL" and not deepl_key_input.validate_key():
-    Message("deepl_key_check", stop=True).warning()
+    if source_lang == target_lang:
+        Message("select_same_lang", stop=True).warning()
 
-with st.spinner('Loading...'):
-    translator = Translator().get_translator(st.session_state.translator, deepl_key_input.auth_key)
-    localizer = FTBRenewalLocalizer(locale_uploader.files, None, translator, src_sb.lang, dest_sb.lang, None)
-    time.sleep(2)
-LocalizeButton().show()
+button = st.button(
+    label = Message("start_button_label").text,
+    type = "primary",
+    use_container_width = True
+)
 
-if st.session_state.localize:
-    manager = FTBRenewalLocalizerManager(localizer)
-    manager.run()
-    manager.show_manual()
+if button:    
+    status = st.status(
+        label = Message("status_in_progress").text,
+        expanded = True
+    )
+
+    Message("status_step_1", st_container=status).send()
+    converter = SNBTConverter()
+    source_lang_dict = converter.convert_snbt_to_json(slib.loads(read_file(lang_file)))
+    target_lang_dict = {}
+        
+    Message("status_step_2", st_container=status).send()
+    if source_lang_dict:
+        asyncio.run(translator.translate(source_lang_dict, target_lang_dict, target_lang, status))
+
+    status.update(
+        label = Message("status_done").text,
+        state = "complete",
+        expanded = False
+    )
+    
+    with st.container(border=True):
+        Message("downloads_header").subheader()
+        
+        source_lang_filename = f"{source_lang}.snbt"
+        source_lang_download = st.download_button(
+            label = source_lang_filename,
+            data = slib.dumps(converter.convert_json_to_snbt(source_lang_dict)),
+            file_name = source_lang_filename,
+            on_click = "ignore",
+            mime = "text/plain"
+        )
+        
+        target_lang_filename = f"{target_lang}.snbt"
+        target_lang_download = st.download_button(
+            label = target_lang_filename,
+            data = slib.dumps(converter.convert_json_to_snbt(target_lang_dict)),
+            file_name = target_lang_filename,
+            on_click = "ignore",
+            mime = "text/plain"
+        )
+
+    with st.container(border=True):
+        Message("user_guide_header").subheader()
+
+        Message("user_guide_ftbq_new", source_lang=source_lang, target_lang=target_lang).send()

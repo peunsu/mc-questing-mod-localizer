@@ -230,8 +230,7 @@ if button:
         Message("user_guide_header").subheader()
 
         Message("user_guide_ftbq_1").send()
-        
         if st.session_state.do_translate:
             Message("user_guide_ftbq_2", source_lang=source_lang, target_lang=target_lang).send()
         else:
-            Message("user_guide_ftbq_2", source_lang=source_lang).send()
+            Message("user_guide_ftbq_3", source_lang=source_lang).send()

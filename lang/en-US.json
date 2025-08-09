@@ -1,8 +1,8 @@
 {
     "home_title": "Minecraft Questing Mod Localizer",
     "home_about": "Minecraft Questing Mod Localizer is a web application that helps you to localize quest files of Minecraft questing mods.\nYou can convert quest files to localizable format, translate quest files to other languages, and apply the translated quest files to the modpack.\nThis application supports FTB Quests and Better Questing.",
-    "home_new_title": "FTB Quests 1.21+ Localizer (Beta)",
-    "home_new_desc": "[Version 2100.1.0](https://github.com/FTBTeam/FTB-Quests/blob/main/CHANGELOG.md#210010) has changed the way translations are handled. The translation text is now stored in `config/ftb_quests/quests/lang/xx_xx.snbt` file, no longer requiring additional `.json` files.\n\nThe beta version of FTB Quests 1.21+ Localizer is available now. If you encounter any problems, please report them on [this issue page](https://github.com/peunsu/mc-questing-mod-localizer/issues/) to help improve the service.",
+    "home_new_title": "Gemini is here!",
+    "home_new_desc": "Gemini is a large language model that provides high-quality translations. You can get a free Gemini API key from [here](https://ai.google.dev/gemini-api/docs) and translate your quest files with it.",
     "home_contact_title": "Contact / Report Bugs",
     "back_to_home": "Back to Home",
     "deepl_key_label": "DeepL API Key",
@@ -14,6 +14,8 @@
     "api_key_invalid": "The API key is invalid or has reached its limit.",
     "ftbq_title": "FTB Quests Localizer",
     "ftbq_readme": "### Read Me\n\n- **Quest files** (`.snbt`) are in the `config/ftbquests/quests` folder of the modpack.\n\n- **Language files** (`.json`) are in the `kubejs/assets/kubejs/lang` folder of the modpack. The directory may vary depending on the modpack.",
+    "ftbq_new_title": "FTB Quests 1.21+ Localizer",
+    "ftbq_new_readme": "### Read Me\n\n- [Version 2100.1.0](https://github.com/FTBTeam/FTB-Quests/blob/main/CHANGELOG.md#210010) has changed the way translations are handled. The translation text is now stored in `config/ftb_quests/quests/lang/xx_xx.snbt` file, no longer requiring additional `.json` files.\n\n- **Language files** (`.snbt`) are in the `config/ftbquests/quests/lang` folder of the modpack. The directory may vary depending on the modpack.",
     "modpack_name_header": "Modpack Name",
     "modpack_name_label": "Enter the shortened name of the modpack. [Example: All the Mods 9 → atm9]",
     "select_task_header": "Select Task",
@@ -30,6 +32,7 @@
     "upload_quest_label_ftbq": "Upload all quest files (`.snbt`) in the `config/ftbquests/quests` folder of the modpack.",
     "upload_lang_header": "Upload Language File",
     "upload_lang_label_ftbq": "Upload a language file (`.json`) in the `kubejs/assets/kubejs/lang` folder of the modpack. The directory may vary depending on the modpack.",
+    "upload_lang_label_ftbq_new": "Upload a language file (`.snbt`) in the `config/ftbquests/quests/lang` folder of the modpack. The directory may vary depending on the modpack.",
     "settings_header": "Settings",
     "select_translator_label": "Select a translator service.",
     "select_source_lang_label": "Select the language of the quests you uploaded.",
@@ -45,7 +48,7 @@
     "user_guide_ftbq_1": "* Download `quests.zip`.\n\n* Extract `quests.zip` and replace the original `.snbt` files in `config/ftbquests/quests` folder with the extracted files.",
     "user_guide_ftbq_2": "* Download `{source_lang}.json` and `{target_lang}.json`.\n\n* Place `{source_lang}.json` and `{target_lang}.json` in `kubejs/assets/kubejs/lang` folder (or the folder where the original lang files are placed).\n\n* Done! If you want to fix mistranslated text, edit `{target_lang}.json` with your text editor.",
     "user_guide_ftbq_3": "* Download `{source_lang}.json`. (Click the button below)\n\n* Place `{source_lang}.json` in `kubejs/assets/kubejs/lang` folder (or the folder where the original lang files are placed).\n\n* Done!",
-
+    "user_guide_ftbq_new": "* Download `{source_lang}.snbt` and `{target_lang}.snbt`.\n\n* Place `{source_lang}.snbt` and `{target_lang}.snbt` in `config/ftbquests/quests/lang` folder (or the folder where the original lang files are placed).\n\n* Done! If you want to fix mistranslated text, edit `{target_lang}.snbt` with your text editor.",
 
     "ftbq_renewal_title": "FTB Quests 1.21+ Localizer (Beta)",
     "bqm_title": "Better Questing Localizer",

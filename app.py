@@ -3,7 +3,7 @@ from streamlit_extras.buy_me_a_coffee import button
 
 home_page = st.Page("home.py", title="Home", icon="🏠")
 ftbq_page = st.Page("localizers/1_ftbq.py", title="FTB Quests Localizer", icon="👑")
-ftbq_renewal_page = st.Page("localizers/2_ftbq_renewal.py", title="FTB Quests 1.21+ Localizer (Beta)", icon="⭐")
+ftbq_renewal_page = st.Page("localizers/2_ftbq_renewal.py", title="FTB Quests 1.21+ Localizer", icon="⭐")
 bqm_page = st.Page("localizers/3_bqm.py", title="Better Questing Localizer", icon="📖")
 
 pg = st.navigation(
@@ -25,7 +25,7 @@ st.set_page_config(
             "About": '''
             ### Minecraft Questing Mod Localizer\n
             [![GitHub Release](https://img.shields.io/github/v/release/peunsu/mc-questing-mod-localizer?style=for-the-badge)](https://github.com/peunsu/mc-questing-mod-localizer/releases/latest)\n
-            **[MIT License](https://github.com/peunsu/mc-questing-mod-localizer/blob/main/LICENSE) ⓒ 2024 [peunsu](https://github.com/peunsu)**\n
+            **[MIT License](https://github.com/peunsu/mc-questing-mod-localizer/blob/main/LICENSE) ⓒ 2024-2025 [peunsu](https://github.com/peunsu)**\n
             ### Credits\n
             * **[FTB Quests](https://www.curseforge.com/minecraft/mc-mods/ftb-quests-forge) by [FTB Team](https://www.curseforge.com/members/ftb)**\n
             * **[Better Questing](https://www.curseforge.com/minecraft/mc-mods/better-questing) by [Funwayguy](https://www.curseforge.com/members/funwayguy)**\n
