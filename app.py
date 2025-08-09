@@ -5,17 +5,12 @@ home_page = st.Page("home.py", title="Home", icon="🏠")
 ftbq_page = st.Page("localizers/1_ftbq.py", title="FTB Quests Localizer", icon="👑")
 ftbq_renewal_page = st.Page("localizers/2_ftbq_renewal.py", title="FTB Quests 1.21+ Localizer (Beta)", icon="⭐")
 bqm_page = st.Page("localizers/3_bqm.py", title="Better Questing Localizer", icon="📖")
-mods_page = st.Page("localizers/4_mods.py", title="Mods Localizer (WIP)", icon="🛠️")
-
-test_page = st.Page("localizers/5_ftbq_v3.py", title="Test Page", icon="🧪")
 
 pg = st.navigation(
     {
         "Main": [home_page],
         "FTB Quests": [ftbq_page, ftbq_renewal_page],
         "Better Questing": [bqm_page],
-        "Mods": [mods_page],
-        "Test": [test_page],
     }
 )
 

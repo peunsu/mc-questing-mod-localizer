@@ -1,6 +1,8 @@
+import deepl
+import streamlit as st
 from io import StringIO, BytesIO
 from tqdm.asyncio import tqdm_asyncio
-import streamlit as st
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 def localize_init() -> None:
     if 'localize' not in st.session_state:
@@ -28,6 +30,28 @@ def read_file(file: BytesIO) -> str:
 
 def write_file(data: str) -> BytesIO:
     return BytesIO(data.encode('utf-8'))
+
+@st.cache_data(ttl=3600)
+def check_deepl_key(auth_key: str) -> bool:
+    try:
+        deepl_client = deepl.DeepLClient(auth_key)
+        usage = deepl_client.get_usage()
+        return usage.character.count < usage.character.limit
+    except:
+        return False
+
+@st.cache_data(ttl=3600)
+def check_gemini_key(auth_key: str) -> bool:
+    try:
+        llm = ChatGoogleGenerativeAI(
+            model="gemini-2.0-flash",
+            google_api_key=auth_key,
+            temperature=0
+        )
+        llm.invoke("ping")
+        return True
+    except:
+        return False
 
 class stqdm_asyncio(tqdm_asyncio):
     '''

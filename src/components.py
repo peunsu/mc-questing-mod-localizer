@@ -19,54 +19,55 @@ class Message:
     message: str
     stop: bool
     
-    def __init__(self, key: str, stop: bool = False, **kwargs):
+    def __init__(self, key: str, stop: bool = False, st_container = st, **kwargs):
         self.message = MESSAGES[st.session_state.language][key].format(**kwargs)
         self.stop = stop
-    
+        self.st_container = st_container
+
     @property
     def text(self) -> str:
         return self.message
     
     def send(self) -> None:
-        st.write(self.message)
+        self.st_container.write(self.message)
         if self.stop:
-            st.stop()
-    
+            self.st_container.stop()
+
     def info(self) -> None:
-        st.info(self.message, icon="ℹ️")
+        self.st_container.info(self.message)
         if self.stop:
-            st.stop()
-    
+            self.st_container.stop()
+
     def warning(self) -> None:
-        st.warning(self.message, icon="⚠️")
+        self.st_container.warning(self.message)
         if self.stop:
-            st.stop()
-    
+            self.st_container.stop()
+
     def error(self) -> None:
-        st.error(self.message, icon="❌")
+        self.st_container.error(self.message)
         if self.stop:
-            st.stop()
-    
-    def success(self) -> None:
-        st.success(self.message, icon="✅")
+            self.st_container.stop()
+
+    def caption(self) -> None:
+        self.st_container.caption(self.message)
         if self.stop:
-            st.stop()
-    
+            self.st_container.stop()
+
     def toast(self) -> None:
-        st.toast(body=self.message, icon="📝")
+        self.st_container.toast(body=self.message)
         if self.stop:
-            st.stop()
-    
+            self.st_container.stop()
+
     def subheader(self) -> None:
-        st.subheader(self.message)
+        self.st_container.subheader(self.message)
         if self.stop:
-            st.stop()
-    
+            self.st_container.stop()
+
     def title(self) -> None:
-        st.title(self.message)
+        self.st_container.title(self.message)
         if self.stop:
-            st.stop()
-            
+            self.st_container.stop()
+
 class ProgressBar:
     task: str
     current: int
