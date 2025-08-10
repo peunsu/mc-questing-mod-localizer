@@ -104,14 +104,22 @@ if button:
         expanded = True
     )
 
-    Message("status_step_1", st_container=status).send()
-    snbt_converter = SNBTConverter()
-    source_lang_dict = snbt_converter.convert_snbt_to_json(slib.loads(read_file(lang_file)))
-    target_lang_dict = {}
-        
-    Message("status_step_2", st_container=status).send()
-    if source_lang_dict:
-        asyncio.run(translator.translate(source_lang_dict, target_lang_dict, target_lang, status))
+    try:
+        Message("status_step_1", st_container=status).send()
+        snbt_converter = SNBTConverter()
+        source_lang_dict = snbt_converter.convert_snbt_to_json(slib.loads(read_file(lang_file)))
+        target_lang_dict = {}
+            
+        Message("status_step_2", st_container=status).send()
+        if source_lang_dict:
+            asyncio.run(translator.translate(source_lang_dict, target_lang_dict, target_lang, status))
+    except Exception as e:
+        status.update(
+            label = Message("status_error").text,
+            state = "error"
+        )
+        status.error(f"An error occurred while localizing: {e}")
+        st.stop()
 
     status.update(
         label = Message("status_done").text,
