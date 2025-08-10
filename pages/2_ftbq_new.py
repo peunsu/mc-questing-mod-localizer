@@ -48,7 +48,7 @@ if not lang_file:
 with st.container(border=True):
     lang_list = list(MINECRAFT_LANGUAGES)
     
-    st.subheader("Settings")
+    Message("settings_header").subheader()
     
     translator_service = st.pills(
         label = Message("select_translator_label").text,
