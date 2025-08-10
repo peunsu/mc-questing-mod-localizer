@@ -89,7 +89,7 @@ class GoogleTranslator(Translator):
     def __init__(self):
         self.translator = googletrans.Translator()
     
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=8, max=32))
+    @retry(stop=stop_after_attempt(5), wait=wait_exponential(min=8, max=64))
     async def _translate(self, batch: dict, target_lang: str) -> dict:
         batch_input_keys = []
         batch_input_values = []
@@ -114,7 +114,7 @@ class DeepLTranslator(Translator):
     def __init__(self, auth_key: str):
         self.translator = deepl.DeepLClient(auth_key)
     
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=8, max=32))
+    @retry(stop=stop_after_attempt(5), wait=wait_exponential(min=8, max=64))
     async def _translate(self, batch: dict, target_lang: str) -> dict:
         batch_input_keys = []
         batch_input_values = []
@@ -206,7 +206,7 @@ class GeminiTranslator(Translator):
         else:
             raise ValueError("Input must be a string.")
 
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=16, max=64))
+    @retry(stop=stop_after_attempt(5), wait=wait_exponential(min=8, max=128))
     async def _translate(self, batch: dict, target_lang: str) -> dict:
         batch_output = await self.translator.ainvoke(
             {
