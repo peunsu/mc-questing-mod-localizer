@@ -115,7 +115,7 @@ if st.session_state.lang_exists and not lang_file:
 with st.container(border=True):
     lang_list = list(MINECRAFT_LANGUAGES)
     if st.session_state.do_translate:
-        st.subheader("Settings")
+        Message("settings_header").subheader()
         
         translator_service = st.pills(
             label = Message("select_translator_label").text,
