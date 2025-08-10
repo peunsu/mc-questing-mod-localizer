@@ -1,13 +1,12 @@
-import json
 import asyncio
-import streamlit as st
 import ftb_snbt_lib as slib
-from tempfile import TemporaryDirectory
-from src.components import *
-from src.constants import *
+
+import streamlit as st
+
+from src.constants import MINECRAFT_LANGUAGES, MINECRAFT_TO_GOOGLE, MINECRAFT_TO_DEEPL
 from src.converter import SNBTConverter
 from src.translator import GoogleTranslator, DeepLTranslator, GeminiTranslator
-from src.utils import read_file, check_deepl_key, check_gemini_key
+from src.utils import Message, read_file, check_deepl_key, check_gemini_key
 
 with st.sidebar:
     deepl_key = st.text_input(
@@ -26,7 +25,7 @@ with st.sidebar:
 
 Message("ftbq_new_title").title()
 st.page_link(
-    page = "home.py",
+    page = "pages/0_home.py",
     label = Message("back_to_home").text,
     icon = "↩️"
 )
@@ -106,8 +105,8 @@ if button:
     )
 
     Message("status_step_1", st_container=status).send()
-    converter = SNBTConverter()
-    source_lang_dict = converter.convert_snbt_to_json(slib.loads(read_file(lang_file)))
+    snbt_converter = SNBTConverter()
+    source_lang_dict = snbt_converter.convert_snbt_to_json(slib.loads(read_file(lang_file)))
     target_lang_dict = {}
         
     Message("status_step_2", st_container=status).send()
@@ -126,7 +125,7 @@ if button:
         source_lang_filename = f"{source_lang}.snbt"
         source_lang_download = st.download_button(
             label = source_lang_filename,
-            data = slib.dumps(converter.convert_json_to_snbt(source_lang_dict)),
+            data = slib.dumps(snbt_converter.convert_json_to_snbt(source_lang_dict)),
             file_name = source_lang_filename,
             on_click = "ignore",
             mime = "text/plain"
@@ -135,7 +134,7 @@ if button:
         target_lang_filename = f"{target_lang}.snbt"
         target_lang_download = st.download_button(
             label = target_lang_filename,
-            data = slib.dumps(converter.convert_json_to_snbt(target_lang_dict)),
+            data = slib.dumps(snbt_converter.convert_json_to_snbt(target_lang_dict)),
             file_name = target_lang_filename,
             on_click = "ignore",
             mime = "text/plain"

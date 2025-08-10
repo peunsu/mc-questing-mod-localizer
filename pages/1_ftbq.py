@@ -1,12 +1,13 @@
 import json
 import asyncio
-import streamlit as st
 from tempfile import TemporaryDirectory
-from src.components import *
-from src.constants import *
+
+import streamlit as st
+
+from src.constants import MINECRAFT_LANGUAGES, MINECRAFT_TO_GOOGLE, MINECRAFT_TO_DEEPL
 from src.converter import FTBQuestConverter
 from src.translator import GoogleTranslator, DeepLTranslator, GeminiTranslator
-from src.utils import read_file, check_deepl_key, check_gemini_key
+from src.utils import Message, read_file, check_deepl_key, check_gemini_key
 
 with st.sidebar:
     deepl_key = st.text_input(
@@ -25,7 +26,7 @@ with st.sidebar:
 
 Message("ftbq_title").title()
 st.page_link(
-    page = "home.py",
+    page = "pages/0_home.py",
     label = Message("back_to_home").text,
     icon = "↩️"
 )

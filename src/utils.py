@@ -1,26 +1,11 @@
-import deepl
-import streamlit as st
 from io import StringIO, BytesIO
 from tqdm.asyncio import tqdm_asyncio
+
+import streamlit as st
+import deepl
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-def localize_init() -> None:
-    if 'localize' not in st.session_state:
-        st.session_state.localize = False
-        
-def language_init() -> None:
-    if "lang" not in st.query_params:
-        st.query_params.lang = "en_us"
-
-def translator_init() -> None:
-    if "translator" not in st.session_state:
-        st.session_state.translator = "Google"
-
-def localize_button() -> None:
-    st.session_state.localize = True
-
-def reset_localize_button(*args) -> None:
-    st.session_state.localize = False
+from src.constants import MESSAGES
 
 def read_file(file: BytesIO) -> str:
     try:
@@ -31,7 +16,7 @@ def read_file(file: BytesIO) -> str:
 def write_file(data: str) -> BytesIO:
     return BytesIO(data.encode('utf-8'))
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=60)
 def check_deepl_key(auth_key: str) -> bool:
     try:
         deepl_client = deepl.DeepLClient(auth_key)
@@ -40,7 +25,7 @@ def check_deepl_key(auth_key: str) -> bool:
     except:
         return False
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=360)
 def check_gemini_key(auth_key: str) -> bool:
     try:
         llm = ChatGoogleGenerativeAI(
@@ -52,6 +37,59 @@ def check_gemini_key(auth_key: str) -> bool:
         return True
     except:
         return False
+
+class Message:
+    message: str
+    stop: bool
+    
+    def __init__(self, key: str, stop: bool = False, st_container = st, **kwargs):
+        self.message = MESSAGES[st.session_state.language][key].format(**kwargs)
+        self.stop = stop
+        self.st_container = st_container
+
+    @property
+    def text(self) -> str:
+        return self.message
+    
+    def send(self) -> None:
+        self.st_container.write(self.message)
+        if self.stop:
+            self.st_container.stop()
+
+    def info(self) -> None:
+        self.st_container.info(self.message)
+        if self.stop:
+            self.st_container.stop()
+
+    def warning(self) -> None:
+        self.st_container.warning(self.message)
+        if self.stop:
+            self.st_container.stop()
+
+    def error(self) -> None:
+        self.st_container.error(self.message)
+        if self.stop:
+            self.st_container.stop()
+
+    def caption(self) -> None:
+        self.st_container.caption(self.message)
+        if self.stop:
+            self.st_container.stop()
+
+    def toast(self) -> None:
+        self.st_container.toast(body=self.message)
+        if self.stop:
+            self.st_container.stop()
+
+    def subheader(self) -> None:
+        self.st_container.subheader(self.message)
+        if self.stop:
+            self.st_container.stop()
+
+    def title(self) -> None:
+        self.st_container.title(self.message)
+        if self.stop:
+            self.st_container.stop()
 
 class stqdm_asyncio(tqdm_asyncio):
     '''

@@ -1,10 +1,10 @@
 import streamlit as st
 from streamlit_extras.buy_me_a_coffee import button
 
-home_page = st.Page("home.py", title="Home", icon="🏠")
-ftbq_page = st.Page("localizers/1_ftbq.py", title="FTB Quests Localizer", icon="👑")
-ftbq_renewal_page = st.Page("localizers/2_ftbq_renewal.py", title="FTB Quests 1.21+ Localizer", icon="⭐")
-bqm_page = st.Page("localizers/3_bqm.py", title="Better Questing Localizer", icon="📖")
+home_page = st.Page("pages/0_home.py", title="Home", icon="🏠")
+ftbq_page = st.Page("pages/1_ftbq.py", title="FTB Quests Localizer", icon="👑")
+ftbq_renewal_page = st.Page("pages/2_ftbq_new.py", title="FTB Quests Localizer (1.21+)", icon="⭐")
+bqm_page = st.Page("pages/3_bqm.py", title="Better Questing Localizer", icon="📖")
 
 pg = st.navigation(
     {
@@ -32,6 +32,8 @@ st.set_page_config(
             ### Dependencies\n
             * [streamlit](https://github.com/streamlit/streamlit): A tool to build and share the web application with Python.
             * [googletrans](https://github.com/ssut/py-googletrans): Google translate API for Python.
+            * [deepl-python](https://github.com/DeepLcom/deepl-python): DeepL API client for Python.
+            * [langchain](https://github.com/langchain-ai/langchain): A framework for developing applications powered by language models.
             * [ftb-snbt-lib](https://github.com/peunsu/ftb-snbt-lib): Python library to parse, edit, and save FTB snbt tag.
             '''
         }

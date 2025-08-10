@@ -15,7 +15,7 @@ from langchain_core.runnables import RunnableLambda
 from langchain_core.messages import AIMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-from .constants import MINECRAFT_TO_DEEPL, MINECRAFT_TO_GOOGLE
+from src.constants import MINECRAFT_TO_DEEPL, MINECRAFT_TO_GOOGLE
 
 class Translator:
     @abstractmethod
@@ -23,12 +23,12 @@ class Translator:
         pass
     
     @staticmethod
-    def _escape_color_code(text: str) -> str:
+    def _escape(text: str) -> str:
         text = re.sub(r"(\\n)", r"<br>", text)
         return re.sub(r"(&[0-9a-z])", lambda x: f"<{x.group(0)[1:]}>", text)
     
     @staticmethod
-    def _unescape_color_code(text: str) -> str:
+    def _unescape(text: str) -> str:
         text = re.sub(r"(<[0-9a-zA-Z]>)", lambda x: f"&{x.group(0)[1:-1].lower()}", text)
         text = re.sub(r"&(?=[^0-9a-z]|$)", r"\&", text)
         text = re.sub(r"(<br>|<BR>)", r"\\n", text)
@@ -103,11 +103,11 @@ class GoogleTranslator(Translator):
                 batch_original[key] = value
             else:
                 batch_input_keys.append(key)
-                batch_input_values.append(self._escape_color_code(value))
+                batch_input_values.append(self._escape(value))
 
         if batch_input_values:
             batch_output = await self.translator.translate(batch_input_values, dest=MINECRAFT_TO_GOOGLE[target_lang])
-            batch_translated = {key: self._unescape_color_code(value.text) for key, value in zip(batch_input_keys, batch_output)}
+            batch_translated = {key: self._unescape(value.text) for key, value in zip(batch_input_keys, batch_output)}
         return {**batch_original, **batch_translated}
 
 class DeepLTranslator(Translator):
@@ -128,16 +128,16 @@ class DeepLTranslator(Translator):
                 batch_original[key] = value
             else:
                 batch_input_keys.append(key)
-                batch_input_values.append(self._escape_color_code(value))
+                batch_input_values.append(self._escape(value))
 
         if batch_input_values:
             batch_output = self.translator.translate_text(
                 text=batch_input_values,
                 target_lang=MINECRAFT_TO_DEEPL[target_lang],
-                context="This is a Minecraft quest text, so please keep the color codes and formatting intact. Example of color codes: <a>, <b>, <1>, <2>, <l>, <r>. Example of formatting: \\\\n. Example Translation: <a>Hello \\\\n<b>Minecraft! -> <a>안녕하세요 \\\\n<b>마인크래프트!",
+                context="This is a Minecraft quest text, so please keep the color codes and formatting intact. Example of color codes: <a>, <b>, <1>, <2>, <l>, <r>. Example of formatting: <br>. Example Translation: <a>Hello <br><b>Minecraft! -> <a>안녕하세요 <br><b>마인크래프트!",
                 preserve_formatting=True
             )
-            batch_translated = {key: self._unescape_color_code(value.text) for key, value in zip(batch_input_keys, batch_output)}
+            batch_translated = {key: self._unescape(value.text) for key, value in zip(batch_input_keys, batch_output)}
         return {**batch_original, **batch_translated}
 
 class GeminiTranslator(Translator):
@@ -155,7 +155,7 @@ class GeminiTranslator(Translator):
             Your task is to translate the given JSON-formatted text.
             Be aware that what you are translating is a quest text for Minecraft modpack.
             You MUST keep the color codes INTACT. Example of color codes: &a, &b, &1, &2, &l, &r.
-            You MUST keep the new line symbol (\\\\n) INTACT.
+            You MUST keep the new line symbol (\\n) INTACT.
             You MUST keep the text encased in [ ] or {{ }}.
             If there are words that are difficult or ambiguous to translate, translate them PHONETICALLY. Also, transcribe proper nouns PHONETICALLY.
             Translation Examples (en_us -> ko_kr):
@@ -173,6 +173,11 @@ class GeminiTranslator(Translator):
     
     @staticmethod
     def extract_json(text: str) -> dict:
+        '''
+        Copyright 2025 moonzoo
+        
+        https://mz-moonzoo.tistory.com/m/89
+        '''
         if isinstance(text, str):
             if text.strip().startswith("```json"):
                 start_block = text.find("{")

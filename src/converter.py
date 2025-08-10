@@ -4,7 +4,7 @@ import json
 import ftb_snbt_lib as slib
 
 from abc import abstractmethod
-from io import BytesIO, StringIO
+from io import BytesIO
 from zipfile import ZipFile
 from ftb_snbt_lib import tag
 from src.utils import read_file
@@ -196,4 +196,23 @@ class SNBTConverter:
                 output[key]  = slib.List([slib.String('')] * len(value))
                 for idx, val in enumerate(value):
                     output[key][idx] = slib.String(val)
+        return output
+
+class LANGConverter:
+    @staticmethod
+    def convert_lang_to_json(data: str) -> dict:
+        output = {}
+        for line in data.splitlines():
+            if line.startswith("#") or not line:
+                continue
+            key, value = re.compile('(.*)=(.*)').match(line).groups()
+            output[key] = value.replace("%n", r"\n")
+        return output
+
+    @staticmethod
+    def convert_json_to_lang(data: dict) -> str:
+        output = ""
+        for key, value in data.items():
+            value = value.replace(r"\n", "%n")
+            output += f"{key}={value}\n"
         return output
