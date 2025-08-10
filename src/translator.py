@@ -206,7 +206,7 @@ class GeminiTranslator(Translator):
         else:
             raise ValueError("Input must be a string.")
 
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=8, max=32))
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=16, max=64))
     async def _translate(self, batch: dict, target_lang: str) -> dict:
         batch_output = await self.translator.ainvoke(
             {
