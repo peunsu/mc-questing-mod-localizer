@@ -27,7 +27,7 @@ class QuestConverter():
 class FTBQuestConverter(QuestConverter):
     @staticmethod
     def _read(quest: BytesIO) -> tuple[str, tag.Compound]:
-        quest_name = re.compile('\W+').sub("", os.path.splitext(quest.name)[0].lower().replace(" ", "_"))
+        quest_name = re.compile(r'\W+').sub("", os.path.splitext(quest.name)[0].lower().replace(" ", "_"))
         
         quest_data = read_file(quest)
         quest_data = slib.loads(quest_data)
