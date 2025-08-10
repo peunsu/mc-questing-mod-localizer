@@ -1,20 +1,20 @@
 import re
 import json
 import asyncio
-import tiktoken
 from abc import abstractmethod
 from flatten_json import flatten, unflatten_list
 from tenacity import retry, stop_after_attempt, wait_exponential
-from src.utils import stqdm_asyncio
 
-import deepl
 import googletrans
+import deepl
+import tiktoken
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnableLambda
 from langchain_core.messages import AIMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 
+from src.utils import stqdm_asyncio
 from src.constants import MINECRAFT_TO_DEEPL, MINECRAFT_TO_GOOGLE
 
 class Translator:
@@ -24,14 +24,14 @@ class Translator:
     
     @staticmethod
     def _escape(text: str) -> str:
-        text = re.sub(r"(\\n)", r"<br>", text)
-        return re.sub(r"(&[0-9a-z])", lambda x: f"<{x.group(0)[1:]}>", text)
+        text = re.sub(r"(\\n)", r"<br>", text) # escape newline
+        return re.sub(r"(&[0-9a-z])", lambda x: f"<{x.group(0)[1:]}>", text) # escape color code
     
     @staticmethod
     def _unescape(text: str) -> str:
-        text = re.sub(r"(<[0-9a-zA-Z]>)", lambda x: f"&{x.group(0)[1:-1].lower()}", text)
-        text = re.sub(r"&(?=[^0-9a-z]|$)", r"\&", text)
-        text = re.sub(r"(<br>|<BR>)", r"\\n", text)
+        text = re.sub(r"(<[0-9a-zA-Z]>)", lambda x: f"&{x.group(0)[1:-1].lower()}", text) # restore color code
+        text = re.sub(r"&(?=[^0-9a-z]|$)", r"\&", text) # escape single &
+        text = re.sub(r"(<br>|<BR>)", r"\\n", text) # restore newline
         return text
 
     @staticmethod
@@ -43,16 +43,16 @@ class Translator:
         
         for key, value in lang_dict.items():
             pair_str = json.dumps({key: value}, ensure_ascii=False)
-            tokens = len(enc.encode(pair_str))
+            tokens = len(enc.encode(pair_str)) # count tokens
             if current_tokens + tokens > max_tokens and current_batch:
-                batches.append(current_batch)
+                batches.append(current_batch) # append current batch
                 current_batch = {}
                 current_tokens = 0
-            
-            current_batch[key] = value
+
+            current_batch[key] = value # add to current batch if not exceeding max tokens
             current_tokens += tokens
         
-        if current_batch:
+        if current_batch: # append the last batch
             batches.append(current_batch)
         
         return batches
@@ -60,26 +60,31 @@ class Translator:
     async def translate(self, source_lang_dict: dict, target_lang_dict: dict, target_lang: str, status):
         semaphore = asyncio.Semaphore(4)
         
-        async def wrap_translate(text):
+        async def wrap_translate(batch):
             async with semaphore:
                 await asyncio.sleep(2)
-                return await self._translate(text, target_lang)
+                try:
+                    return await self._translate(batch, target_lang)
+                except Exception:
+                    batch_keys = list(batch.keys())
+                    batch_start = batch_keys[0] if batch_keys else None
+                    batch_end = batch_keys[-1] if batch_keys else None
+                    status.error(f"Translation failed for batch: `{batch_start}` ~ `{batch_end}`.")
+                    return batch
+
+        # Flatten json
+        source_lang_dict_flatten = flatten(source_lang_dict, separator="|")
         
-        try:
-            source_lang_dict_flatten = flatten(source_lang_dict, separator="|")
-            
-            batches = self.make_batches(source_lang_dict_flatten, max_tokens=6000)
-            batches_out = await stqdm_asyncio.gather(*[wrap_translate(batch) for batch in batches], desc="Progress", st_container=status, backend=False, frontend=True)
-            
-            result = {}
-            for out in batches_out:
-                result.update(out)
-            result = unflatten_list(result, separator="|")
-            
-            target_lang_dict.update(result)
-        except Exception as e:
-            status.update(label="An error occurred during translation.", state="error")
-            status.write(e)
+        batches = self.make_batches(source_lang_dict_flatten, max_tokens=6000) # 6000 tokens max
+        batches_out = await stqdm_asyncio.gather(*[wrap_translate(batch) for batch in batches], desc="Progress", unit="batch", st_container=status, backend=False, frontend=True)
+
+        # Unflatten json
+        result = {}
+        for out in batches_out:
+            result.update(out)
+        result = unflatten_list(result, separator="|")
+        
+        target_lang_dict.update(result)
 
     @abstractmethod
     async def _translate(self, batch: str, target_lang: str) -> dict:
@@ -89,13 +94,13 @@ class GoogleTranslator(Translator):
     def __init__(self):
         self.translator = googletrans.Translator()
     
-    @retry(stop=stop_after_attempt(5), wait=wait_exponential(min=8, max=64))
+    @retry(stop=stop_after_attempt(5), wait=wait_exponential(min=4, max=64), reraise=True)
     async def _translate(self, batch: dict, target_lang: str) -> dict:
-        batch_input_keys = []
-        batch_input_values = []
-        batch_original = {}
-        batch_translated = {}
-        
+        batch_input_keys = [] # keys to translate
+        batch_input_values = [] # values to translate
+        batch_original = {} # formatted text - do not translate
+        batch_translated = {} # translated text
+
         for key, value in batch.items():
             if value.startswith("[") and value.endswith("]"):
                 batch_original[key] = value
@@ -113,8 +118,8 @@ class GoogleTranslator(Translator):
 class DeepLTranslator(Translator):
     def __init__(self, auth_key: str):
         self.translator = deepl.DeepLClient(auth_key)
-    
-    @retry(stop=stop_after_attempt(5), wait=wait_exponential(min=8, max=64))
+
+    @retry(stop=stop_after_attempt(5), wait=wait_exponential(min=4, max=64), reraise=True)
     async def _translate(self, batch: dict, target_lang: str) -> dict:
         batch_input_keys = []
         batch_input_values = []
@@ -147,9 +152,9 @@ class GeminiTranslator(Translator):
             google_api_key=auth_key,
             temperature=0
         )
-        content_extractor = RunnableLambda(lambda msg: getattr(msg, 'content', '') if isinstance(msg, AIMessage) else str(msg))
-        json_extractor = RunnableLambda(self.extract_json)
-        json_parser = JsonOutputParser()
+        content_extractor = RunnableLambda(lambda msg: getattr(msg, 'content', '') if isinstance(msg, AIMessage) else str(msg)) # extract content
+        json_extractor = RunnableLambda(self.extract_json) # extract json string
+        json_parser = JsonOutputParser() # parse json
         prompt = PromptTemplate(
             template="""You are a Minecraft modpack quest translation assistant.
             Your task is to translate the given JSON-formatted text.
@@ -179,6 +184,7 @@ class GeminiTranslator(Translator):
         https://mz-moonzoo.tistory.com/m/89
         '''
         if isinstance(text, str):
+            # find json code block
             if text.strip().startswith("```json"):
                 start_block = text.find("{")
                 end_block = text.rfind("}")
@@ -189,7 +195,8 @@ class GeminiTranslator(Translator):
                         return json_str
                     except json.JSONDecodeError:
                         pass
-                    
+            
+            # find the last potential json string
             start = text.rfind('{')
             end = text.rfind('}')
             if start != -1 and end != -1 and start < end:
@@ -206,7 +213,7 @@ class GeminiTranslator(Translator):
         else:
             raise ValueError("Input must be a string.")
 
-    @retry(stop=stop_after_attempt(5), wait=wait_exponential(min=8, max=128))
+    # Langchain automatically retries failed requests
     async def _translate(self, batch: dict, target_lang: str) -> dict:
         batch_output = await self.translator.ainvoke(
             {

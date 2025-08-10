@@ -48,6 +48,7 @@
     "status_step_1": "**Step 1.** Converting quests...",
     "status_step_2": "**Step 2.** Translating quests... (It may take a long time - **Do not exit the page!**)",
     "status_done": "Done!",
+    "status_error": "Error",
     "downloads_header": "Downloads",
     "user_guide_header": "User Guide",
     "user_guide_ftbq_1": "* Download `quests.zip`.\n\n* Extract `quests.zip` and replace the original `.snbt` files in `config/ftbquests/quests` folder with the extracted files.",
