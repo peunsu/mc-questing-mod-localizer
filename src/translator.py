@@ -1,6 +1,7 @@
 import re
 import json
 import asyncio
+import logging
 from abc import abstractmethod
 from flatten_json import flatten, unflatten_list
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -12,15 +13,17 @@ from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnableLambda
 from langchain_core.messages import AIMessage
+from langchain_core.callbacks.base import BaseCallbackHandler
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 from src.utils import stqdm_asyncio
 from src.constants import MINECRAFT_TO_DEEPL, MINECRAFT_TO_GOOGLE
 
+logger = logging.getLogger(__name__)
+
 class Translator:
-    @abstractmethod
     def __init__(self):
-        pass
+        logger.info("%s initialized", self.__class__.__name__)
     
     @staticmethod
     def _escape(text: str) -> str:
@@ -34,8 +37,7 @@ class Translator:
         text = re.sub(r"(<br>|<BR>)", r"\\n", text) # restore newline
         return text
 
-    @staticmethod
-    def make_batches(lang_dict: dict, max_tokens: int) -> list:
+    def make_batches(self, lang_dict: dict, max_tokens: int) -> list:
         batches = []
         current_batch = {}
         current_tokens = 0
@@ -54,6 +56,8 @@ class Translator:
         
         if current_batch: # append the last batch
             batches.append(current_batch)
+            
+        logger.info("%s created %d batches", self.__class__.__name__, len(batches))
         
         return batches
     
@@ -69,7 +73,10 @@ class Translator:
                     batch_keys = list(batch.keys())
                     batch_start = batch_keys[0] if batch_keys else None
                     batch_end = batch_keys[-1] if batch_keys else None
+                    
                     status.error(f"Translation failed for batch: `{batch_start}` ~ `{batch_end}`.")
+                    logger.error("%s failed to translate batch: %s ~ %s", self.__class__.__name__, batch_start, batch_end, exc_info=True)
+
                     return batch
 
         # Flatten json
@@ -86,6 +93,8 @@ class Translator:
         
         target_lang_dict.update(result)
 
+        logger.info("%s successfully translated %d batches", self.__class__.__name__, len(batches_out))
+
     @abstractmethod
     async def _translate(self, batch: str, target_lang: str) -> dict:
         pass
@@ -93,6 +102,7 @@ class Translator:
 class GoogleTranslator(Translator):
     def __init__(self):
         self.translator = googletrans.Translator()
+        super().__init__()
     
     @retry(stop=stop_after_attempt(5), wait=wait_exponential(min=4, max=64), reraise=True)
     async def _translate(self, batch: dict, target_lang: str) -> dict:
@@ -118,6 +128,7 @@ class GoogleTranslator(Translator):
 class DeepLTranslator(Translator):
     def __init__(self, auth_key: str):
         self.translator = deepl.DeepLClient(auth_key)
+        super().__init__()
 
     @retry(stop=stop_after_attempt(5), wait=wait_exponential(min=4, max=64), reraise=True)
     async def _translate(self, batch: dict, target_lang: str) -> dict:
@@ -161,7 +172,7 @@ class GeminiTranslator(Translator):
             Be aware that what you are translating is a quest text for Minecraft modpack.
             You MUST keep the color codes INTACT. Example of color codes: &a, &b, &1, &2, &l, &r.
             You MUST keep the new line symbol (\\n) INTACT.
-            You MUST keep the text encased in [ ] or {{ }}.
+            Text enclosed in [] or {{}} must be kept UNCHANGED.
             If there are words that are difficult or ambiguous to translate, translate them PHONETICALLY. Also, transcribe proper nouns PHONETICALLY.
             Translation Examples (en_us -> ko_kr):
             - &aDiamond Pickaxe&r -> &a다이아몬드 곡괭이&r
@@ -175,6 +186,8 @@ class GeminiTranslator(Translator):
             partial_variables={"format_instructions": json_parser.get_format_instructions()}
         )
         self.translator = prompt | llm | content_extractor | json_extractor | json_parser
+        self.handler = CustomHandler()
+        super().__init__()
     
     @staticmethod
     def extract_json(text: str) -> dict:
@@ -219,6 +232,23 @@ class GeminiTranslator(Translator):
             {
                 "target_lang": target_lang,
                 "query": json.dumps(batch, ensure_ascii=False)
+            },
+            config={
+                "callbacks": [self.handler],
+                "verbose": True
             }
         )
         return batch_output
+
+class CustomHandler(BaseCallbackHandler):
+    def on_llm_start(self, serialized, prompts, **kwargs):
+        logger.info("LLM started (%s): %s", kwargs['run_id'], serialized)
+
+    def on_llm_error(self, error, **kwargs):
+        logger.error("LLM error (%s): %s", kwargs['run_id'], error)
+
+    def on_llm_end(self, response, **kwargs):
+        logger.info("LLM ended (%s)", kwargs['run_id'])
+
+    def on_retry(self, retry_state, **kwargs):
+        logger.warning("LLM retrying (%s): %s", kwargs['run_id'], retry_state)

@@ -3,3 +3,12 @@
 # Max size, in megabytes, for files uploaded with the file_uploader.
 # Default: 200
 maxUploadSize = 10
+
+# TTL in seconds for sessions whose websockets have been disconnected.
+#
+# The server may choose to clean up session state, uploaded files, etc
+# for a given session with no active websocket connection at any point
+# after this time has passed.
+#
+# Default: 120
+disconnectedSessionTTL = 15

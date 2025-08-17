@@ -1,5 +1,14 @@
+import logging
 import streamlit as st
 from streamlit_extras.buy_me_a_coffee import button
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+logger.info("Connection established: %s", st.context.ip_address)
 
 home_page = st.Page("pages/0_home.py", title="Home", icon="🏠")
 ftbq_page = st.Page("pages/1_ftbq.py", title="FTB Quests Localizer", icon="👑")
