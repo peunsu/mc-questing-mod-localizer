@@ -2,7 +2,7 @@ import logging
 import streamlit as st
 from streamlit_extras.buy_me_a_coffee import button
 
-from src.utils import get_session_id
+from src.utils import get_session_id, Message
 
 logging.basicConfig(
     level=logging.INFO,
@@ -25,7 +25,8 @@ pg = st.navigation(
         "Main": [home_page],
         "FTB Quests": [ftbq_page, ftbq_new_page],
         "Better Questing": [bqm_page],
-    }
+    },
+    position='top'
 )
 
 st.logo("static/logo.png", icon_image="static/icon.png")
@@ -70,6 +71,20 @@ with st.sidebar:
         }[x]
     )
     st.session_state.language = language_selector
+    
+    st.text_input(
+        label = Message("deepl_key_label").text,
+        type = "password",
+        key = "deepl_key",
+        help = Message("deepl_key_help").text
+    )
+    st.text_input(
+        label = Message("gemini_key_label").text,
+        type = "password",
+        key = "gemini_key",
+        help = Message("gemini_key_help").text
+    )
+    Message("api_key_caption").caption()
     
 button(username="peunsu")
 
