@@ -1,26 +1,29 @@
 import logging
 import streamlit as st
-from streamlit.runtime.scriptrunner import get_script_run_ctx
 from streamlit_extras.buy_me_a_coffee import button
+
+from src.utils import get_session_id
 
 logging.basicConfig(
     level=logging.INFO,
-    format='[%(asctime)s] %(name)s - %(levelname)s - %(message)s'
+    format='[%(asctime)s] %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
 )
 logging.getLogger("httpx").setLevel(logging.WARNING)  # Suppress httpx logs
-logger = logging.getLogger(__name__)
 
-logger.info("Connection established: %s", get_script_run_ctx().session_id)
+logger = logging.getLogger(f"{__name__} ({get_session_id()})")
+
+logger.info("Connection established")
 
 home_page = st.Page("pages/0_home.py", title="Home", icon="🏠")
 ftbq_page = st.Page("pages/1_ftbq.py", title="FTB Quests Localizer", icon="👑")
-ftbq_renewal_page = st.Page("pages/2_ftbq_new.py", title="FTB Quests Localizer (1.21+)", icon="⭐")
+ftbq_new_page = st.Page("pages/2_ftbq_new.py", title="FTB Quests Localizer (1.21+)", icon="⭐")
 bqm_page = st.Page("pages/3_bqm.py", title="Better Questing Localizer", icon="📖")
 
 pg = st.navigation(
     {
         "Main": [home_page],
-        "FTB Quests": [ftbq_page, ftbq_renewal_page],
+        "FTB Quests": [ftbq_page, ftbq_new_page],
         "Better Questing": [bqm_page],
     }
 )
@@ -50,7 +53,7 @@ st.set_page_config(
         }
     )
 
-if st.context.locale == "ko-KR":
+if st.context.locale in ("ko-KR", "ko"):
     st.session_state.language = "ko-KR"
 else:
     st.session_state.language = "en-US"

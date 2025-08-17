@@ -21,7 +21,7 @@ from src.constants import MINECRAFT_TO_DEEPL, MINECRAFT_TO_GOOGLE
 
 class Translator:
     def __init__(self):
-        self.logger = logging.getLogger(f"{self.__class__.__qualname__}.{get_session_id()}")
+        self.logger = logging.getLogger(f"{self.__class__.__qualname__} ({get_session_id()})")
         self.logger.info("Initialized")
 
     @staticmethod
@@ -66,6 +66,7 @@ class Translator:
         async def wrap_translate(batch):
             async with semaphore:
                 await asyncio.sleep(2)
+                
                 task_name = asyncio.current_task().get_name()
                 try:
                     self.logger.info("Translating batch (%s)", task_name)
@@ -94,7 +95,7 @@ class Translator:
         
         target_lang_dict.update(result)
 
-        self.logger.info("Successfully translated %d batches", len(batches_out))
+        self.logger.info("Translated %d batches", len(batches_out))
 
     @abstractmethod
     async def _translate(self, batch: str, target_lang: str) -> dict:
@@ -113,7 +114,9 @@ class GoogleTranslator(Translator):
         batch_translated = {} # translated text
 
         for key, value in batch.items():
-            if value.startswith("[") and value.endswith("]"):
+            if not isinstance(value, str):
+                batch_original[key] = value
+            elif value.startswith("[") and value.endswith("]"):
                 batch_original[key] = value
             elif value.startswith("{") and value.endswith("}"):
                 batch_original[key] = value
@@ -139,7 +142,9 @@ class DeepLTranslator(Translator):
         batch_translated = {}
         
         for key, value in batch.items():
-            if value.startswith("[") and value.endswith("]"):
+            if not isinstance(value, str):
+                batch_original[key] = value
+            elif value.startswith("[") and value.endswith("]"):
                 batch_original[key] = value
             elif value.startswith("{") and value.endswith("}"):
                 batch_original[key] = value
@@ -187,7 +192,7 @@ class GeminiTranslator(Translator):
             partial_variables={"format_instructions": json_parser.get_format_instructions()}
         )
         self.translator = prompt | llm | content_extractor | json_extractor | json_parser
-        self.handler = CustomHandler()
+        self.handler = LLMCallbackHandler(self.__class__.__qualname__)
         super().__init__()
     
     @staticmethod
@@ -241,19 +246,19 @@ class GeminiTranslator(Translator):
         )
         return batch_output
 
-class CustomHandler(BaseCallbackHandler):
-    def __init__(self, *args, **kwargs):
-        self.logger = logging.getLogger("{0}.{1}".format(self.__class__.__qualname__, get_session_id()))
+class LLMCallbackHandler(BaseCallbackHandler):
+    def __init__(self, cls_name, *args, **kwargs):
+        self.logger = logging.getLogger(f"{cls_name} ({get_session_id()})")
         super().__init__(*args, **kwargs)
 
     def on_llm_start(self, serialized, prompts, **kwargs):
-        self.logger.info("LLM started (%s): %s", kwargs['run_id'], serialized)
+        self.logger.info("LLM started: %s", serialized)
 
     def on_llm_error(self, error, **kwargs):
-        self.logger.error("LLM error (%s): %s", kwargs['run_id'], error)
+        self.logger.error("LLM error: %s", error)
 
     def on_llm_end(self, response, **kwargs):
-        self.logger.info("LLM ended (%s)", kwargs['run_id'])
+        self.logger.info("LLM ended: %s")
 
     def on_retry(self, retry_state, **kwargs):
-        self.logger.warning("LLM retrying (%s): %s", kwargs['run_id'], retry_state)
+        self.logger.warning("LLM retrying: %s", retry_state)
