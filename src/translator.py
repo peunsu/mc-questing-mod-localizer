@@ -257,8 +257,5 @@ class LLMCallbackHandler(BaseCallbackHandler):
     def on_llm_error(self, error, **kwargs):
         self.logger.error("LLM error: %s", error)
 
-    def on_llm_end(self, response, **kwargs):
-        self.logger.info("LLM ended: %s")
-
     def on_retry(self, retry_state, **kwargs):
         self.logger.warning("LLM retrying: %s", retry_state)

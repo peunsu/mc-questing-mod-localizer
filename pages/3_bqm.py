@@ -8,21 +8,6 @@ from src.converter import BQMQuestConverter, LANGConverter
 from src.translator import GoogleTranslator, DeepLTranslator, GeminiTranslator
 from src.utils import Message, read_file, check_deepl_key, check_gemini_key
 
-with st.sidebar:
-    deepl_key = st.text_input(
-        label = Message("deepl_key_label").text,
-        type = "password",
-        key = "deepl_key",
-        help = Message("deepl_key_help").text
-    )
-    gemini_key = st.text_input(
-        label = "Gemini API Key",
-        type = "password",
-        key = "gemini_key",
-        help = Message("gemini_key_help").text
-    )
-    Message("api_key_caption").caption()
-
 Message("bqm_title").title()
 st.page_link(
     page = "pages/0_home.py",
@@ -130,6 +115,7 @@ with st.container(border=True):
                 lang_list = list(MINECRAFT_TO_GOOGLE)
                 translator = GoogleTranslator()
             case "DeepL":
+                deepl_key = st.session_state.deepl_key
                 if not deepl_key:
                     Message("api_key_empty", stop=True).info()
                 if not check_deepl_key(deepl_key):
@@ -137,6 +123,7 @@ with st.container(border=True):
                 lang_list = list(MINECRAFT_TO_DEEPL)
                 translator = DeepLTranslator(auth_key=deepl_key)
             case "Gemini":
+                gemini_key = st.session_state.gemini_key
                 if not gemini_key:
                     Message("api_key_empty", stop=True).info()
                 if not check_gemini_key(gemini_key):
