@@ -9,7 +9,7 @@ This application supports [FTB Quests](https://www.curseforge.com/minecraft/mc-m
 * Web App: https://mc-questing-mod-localizer.streamlit.app
 
 # Installation
-* **Python 3.10 or higher** is required
+* **Python 3.10** is required
 * Clone the repo:
 ```bash
 $ git clone https://github.com/peunsu/mc-questing-mod-localizer
@@ -25,10 +25,12 @@ $ pip install -r requirements.txt
 ```
 * Run the application:
 ```bash
-$ streamlit run Home.py
+$ streamlit run app.py
 ```
 
 # Dependencies
 * [streamlit](https://github.com/streamlit/streamlit): A tool to build and share the web application with Python.
 * [googletrans](https://github.com/ssut/py-googletrans): Google translate API for Python.
+* [deepl-python](https://github.com/DeepLcom/deepl-python): DeepL API client for Python.
+* [langchain](https://github.com/langchain-ai/langchain): A framework for developing applications powered by language models.
 * [ftb-snbt-lib](https://github.com/peunsu/ftb-snbt-lib): Python library to parse, edit, and save FTB snbt tag.
