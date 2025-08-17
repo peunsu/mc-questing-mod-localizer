@@ -8,16 +8,18 @@ from abc import abstractmethod
 from io import BytesIO
 from zipfile import ZipFile
 from ftb_snbt_lib import tag
-from src.utils import read_file
+from src.utils import read_file, get_session_id
 
 logger = logging.getLogger(__name__)
 
 class QuestConverter():
     def __init__(self, modpack_name: str, quest_arr: list[BytesIO]):
+        self.logger = logging.getLogger(f"{self.__class__.__qualname__}.{get_session_id()}")
         self.modpack_name = modpack_name
         self.quest_arr = [self._read(quest) for quest in quest_arr]
         self.lang_dict = {}
-        logger.info("%s initialized", self.__class__.__name__)
+        
+        self.logger.info("Initialized")
 
     @staticmethod
     @abstractmethod
@@ -25,7 +27,7 @@ class QuestConverter():
         pass
     
     def convert(self) -> tuple[list, dict]:
-        logger.info("%s successfully converted quests", self.__class__.__name__)
+        self.logger.info("Successfully converted quests")
 
 class FTBQuestConverter(QuestConverter):
     @staticmethod

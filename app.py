@@ -1,14 +1,16 @@
 import logging
 import streamlit as st
+from streamlit.runtime.scriptrunner import get_script_run_ctx
 from streamlit_extras.buy_me_a_coffee import button
 
 logging.basicConfig(
     level=logging.INFO,
     format='[%(asctime)s] %(name)s - %(levelname)s - %(message)s'
 )
+logging.getLogger("httpx").setLevel(logging.WARNING)  # Suppress httpx logs
 logger = logging.getLogger(__name__)
 
-logger.info("Connection established: %s", st.context.ip_address)
+logger.info("Connection established: %s", get_script_run_ctx().session_id)
 
 home_page = st.Page("pages/0_home.py", title="Home", icon="🏠")
 ftbq_page = st.Page("pages/1_ftbq.py", title="FTB Quests Localizer", icon="👑")

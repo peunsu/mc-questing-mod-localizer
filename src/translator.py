@@ -16,15 +16,14 @@ from langchain_core.messages import AIMessage
 from langchain_core.callbacks.base import BaseCallbackHandler
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-from src.utils import stqdm_asyncio
+from src.utils import stqdm_asyncio, get_session_id
 from src.constants import MINECRAFT_TO_DEEPL, MINECRAFT_TO_GOOGLE
-
-logger = logging.getLogger(__name__)
 
 class Translator:
     def __init__(self):
-        logger.info("%s initialized", self.__class__.__name__)
-    
+        self.logger = logging.getLogger(f"{self.__class__.__qualname__}.{get_session_id()}")
+        self.logger.info("Initialized")
+
     @staticmethod
     def _escape(text: str) -> str:
         text = re.sub(r"(\\n)", r"<br>", text) # escape newline
@@ -56,9 +55,9 @@ class Translator:
         
         if current_batch: # append the last batch
             batches.append(current_batch)
-            
-        logger.info("%s created %d batches", self.__class__.__name__, len(batches))
-        
+
+        self.logger.info("Created %d batches", len(batches))
+
         return batches
     
     async def translate(self, source_lang_dict: dict, target_lang_dict: dict, target_lang: str, status):
@@ -67,7 +66,9 @@ class Translator:
         async def wrap_translate(batch):
             async with semaphore:
                 await asyncio.sleep(2)
+                task_name = asyncio.current_task().get_name()
                 try:
+                    self.logger.info("Translating batch (%s)", task_name)
                     return await self._translate(batch, target_lang)
                 except Exception:
                     batch_keys = list(batch.keys())
@@ -75,7 +76,7 @@ class Translator:
                     batch_end = batch_keys[-1] if batch_keys else None
                     
                     status.error(f"Translation failed for batch: `{batch_start}` ~ `{batch_end}`.")
-                    logger.error("%s failed to translate batch: %s ~ %s", self.__class__.__name__, batch_start, batch_end, exc_info=True)
+                    self.logger.error("Failed to translate batch (%s)", task_name, exc_info=True)
 
                     return batch
 
@@ -93,7 +94,7 @@ class Translator:
         
         target_lang_dict.update(result)
 
-        logger.info("%s successfully translated %d batches", self.__class__.__name__, len(batches_out))
+        self.logger.info("Successfully translated %d batches", len(batches_out))
 
     @abstractmethod
     async def _translate(self, batch: str, target_lang: str) -> dict:
@@ -241,14 +242,18 @@ class GeminiTranslator(Translator):
         return batch_output
 
 class CustomHandler(BaseCallbackHandler):
+    def __init__(self, *args, **kwargs):
+        self.logger = logging.getLogger("{0}.{1}".format(self.__class__.__qualname__, get_session_id()))
+        super().__init__(*args, **kwargs)
+
     def on_llm_start(self, serialized, prompts, **kwargs):
-        logger.info("LLM started (%s): %s", kwargs['run_id'], serialized)
+        self.logger.info("LLM started (%s): %s", kwargs['run_id'], serialized)
 
     def on_llm_error(self, error, **kwargs):
-        logger.error("LLM error (%s): %s", kwargs['run_id'], error)
+        self.logger.error("LLM error (%s): %s", kwargs['run_id'], error)
 
     def on_llm_end(self, response, **kwargs):
-        logger.info("LLM ended (%s)", kwargs['run_id'])
+        self.logger.info("LLM ended (%s)", kwargs['run_id'])
 
     def on_retry(self, retry_state, **kwargs):
-        logger.warning("LLM retrying (%s): %s", kwargs['run_id'], retry_state)
+        self.logger.warning("LLM retrying (%s): %s", kwargs['run_id'], retry_state)

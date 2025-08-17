@@ -2,6 +2,8 @@ from io import StringIO, BytesIO
 from tqdm.asyncio import tqdm_asyncio
 
 import streamlit as st
+from streamlit.runtime.scriptrunner import get_script_run_ctx
+
 import deepl
 from langchain_google_genai import ChatGoogleGenerativeAI
 
@@ -15,6 +17,9 @@ def read_file(file: BytesIO) -> str:
 
 def write_file(data: str) -> BytesIO:
     return BytesIO(data.encode('utf-8'))
+
+def get_session_id() -> str:
+    return get_script_run_ctx().session_id
 
 @st.cache_data(ttl=60)
 def check_deepl_key(auth_key: str) -> bool:
