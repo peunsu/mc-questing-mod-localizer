@@ -1,6 +1,7 @@
 import re
 import os
 import json
+import logging
 import ftb_snbt_lib as slib
 
 from abc import abstractmethod
@@ -9,20 +10,22 @@ from zipfile import ZipFile
 from ftb_snbt_lib import tag
 from src.utils import read_file
 
+logger = logging.getLogger(__name__)
+
 class QuestConverter():
     def __init__(self, modpack_name: str, quest_arr: list[BytesIO]):
         self.modpack_name = modpack_name
         self.quest_arr = [self._read(quest) for quest in quest_arr]
         self.lang_dict = {}
-    
+        logger.info("%s initialized", self.__class__.__name__)
+
     @staticmethod
     @abstractmethod
     def _read(quest: BytesIO) -> tuple:
         pass
     
-    @abstractmethod
     def convert(self) -> tuple[list, dict]:
-        pass
+        logger.info("%s successfully converted quests", self.__class__.__name__)
 
 class FTBQuestConverter(QuestConverter):
     @staticmethod
@@ -39,6 +42,7 @@ class FTBQuestConverter(QuestConverter):
     def convert(self) -> tuple[list, dict]:
         for quest_name, quest_data in self.quest_arr:
             self._convert(quest_data, f"{self.modpack_name}.{quest_name}")
+        super().convert()
         return self.quest_arr, self.lang_dict
     
     def _convert(self, quest_data: tag.Compound, lang_key: str):
@@ -104,6 +108,7 @@ class BQMQuestConverter(QuestConverter):
     def convert(self) -> tuple[list, dict]:
         for quest_version, quest_data in self.quest_arr:
             self._convert(quest_version, quest_data)
+        super().convert()
         return self.quest_arr, self.lang_dict
     
     def _convert(self, quest_version: int, quest_data: dict):
