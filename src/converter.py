@@ -14,7 +14,8 @@ logger = logging.getLogger(__name__)
 
 class QuestConverter():
     def __init__(self, modpack_name: str, quest_arr: list[BytesIO]):
-        self.logger = logging.getLogger(f"{self.__class__.__qualname__}.{get_session_id()}")
+        self.logger = logging.getLogger(f"{self.__class__.__qualname__} ({get_session_id()})")
+        
         self.modpack_name = modpack_name
         self.quest_arr = [self._read(quest) for quest in quest_arr]
         self.lang_dict = {}
@@ -27,7 +28,7 @@ class QuestConverter():
         pass
     
     def convert(self) -> tuple[list, dict]:
-        self.logger.info("Successfully converted quests")
+        self.logger.info("Converted %s quests", len(self.quest_arr))
 
 class FTBQuestConverter(QuestConverter):
     @staticmethod
@@ -43,6 +44,7 @@ class FTBQuestConverter(QuestConverter):
     
     def convert(self) -> tuple[list, dict]:
         for quest_name, quest_data in self.quest_arr:
+            self.logger.info("Converting quest (%s)", quest_name)
             self._convert(quest_data, f"{self.modpack_name}.{quest_name}")
         super().convert()
         return self.quest_arr, self.lang_dict
@@ -109,6 +111,7 @@ class BQMQuestConverter(QuestConverter):
     
     def convert(self) -> tuple[list, dict]:
         for quest_version, quest_data in self.quest_arr:
+            self.logger.info("Converting quest (version: %d)", quest_version)
             self._convert(quest_version, quest_data)
         super().convert()
         return self.quest_arr, self.lang_dict
@@ -187,14 +190,18 @@ class BQMQuestConverter(QuestConverter):
         self.lang_dict[f"{self.modpack_name}.questlines{idx}.desc"] = desc
         properties[name_key] = f"{self.modpack_name}.questlines{idx}.name"
         properties[desc_key] = f"{self.modpack_name}.questlines{idx}.desc"
-    
-class SNBTConverter:
-    @staticmethod
-    def convert_snbt_to_json(tag: slib.Compound) -> dict:
-        return json.loads(json.dumps(tag, ensure_ascii=False))
 
-    @staticmethod
-    def convert_json_to_snbt(data: dict) -> slib.Compound:
+class TypeConverter:
+    def __init__(self):
+        self.logger = logging.getLogger(f"{self.__class__.__qualname__} ({get_session_id()})")
+
+class SNBTConverter(TypeConverter):
+    def convert_snbt_to_json(self, tag: slib.Compound) -> dict:
+        output = json.loads(json.dumps(tag, ensure_ascii=False))
+        self.logger.info("Converted SNBT to JSON")
+        return output
+
+    def convert_json_to_snbt(self, data: dict) -> slib.Compound:
         output = slib.Compound()
         for key, value in data.items():
             if isinstance(value, str):
@@ -203,23 +210,24 @@ class SNBTConverter:
                 output[key]  = slib.List([slib.String('')] * len(value))
                 for idx, val in enumerate(value):
                     output[key][idx] = slib.String(val)
+        self.logger.info("Converted JSON to SNBT")
         return output
 
-class LANGConverter:
-    @staticmethod
-    def convert_lang_to_json(data: str) -> dict:
+class LANGConverter(TypeConverter):
+    def convert_lang_to_json(self, data: str) -> dict:
         output = {}
         for line in data.splitlines():
             if line.startswith("#") or not line:
                 continue
             key, value = re.compile('(.*)=(.*)').match(line).groups()
             output[key] = value.replace("%n", r"\n")
+        self.logger.info("Converted LANG to JSON")
         return output
 
-    @staticmethod
-    def convert_json_to_lang(data: dict) -> str:
+    def convert_json_to_lang(self, data: dict) -> str:
         output = ""
         for key, value in data.items():
             value = value.replace(r"\n", "%n")
             output += f"{key}={value}\n"
+        self.logger.info("Converted JSON to LANG")
         return output
