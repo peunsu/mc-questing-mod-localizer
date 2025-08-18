@@ -14,8 +14,11 @@ st.subheader("About")
 st.write("[![GitHub Release](https://img.shields.io/github/v/release/peunsu/mc-questing-mod-localizer?style=for-the-badge)](https://github.com/peunsu/mc-questing-mod-localizer/releases/latest)")
 st.write(Message("home_about").text)
 
-st.subheader(Message("home_new_title").text)
-st.write(Message("home_new_desc").text)
+st.subheader(Message("home_title_1").text)
+st.write(Message("home_desc_1").text)
+
+st.subheader(Message("home_title_2").text)
+st.write(Message("home_desc_2").text)
 
 st.subheader(Message("home_contact_title").text)
 st.write("* [GitHub](https://github.com/peunsu/mc-questing-mod-localizer)")
