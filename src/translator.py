@@ -67,6 +67,7 @@ class Translator:
             async with semaphore:
                 await asyncio.sleep(2)
                 
+                self.logger.info("Getting task name")
                 task_name = asyncio.current_task().get_name()
                 try:
                     self.logger.info("Translating batch (%s)", task_name)
