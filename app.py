@@ -22,12 +22,14 @@ home_page = st.Page("pages/0_home.py", title="Home", icon="🏠")
 ftbq_page = st.Page("pages/1_ftbq.py", title="FTB Quests Localizer", icon="👑")
 ftbq_new_page = st.Page("pages/2_ftbq_new.py", title="FTB Quests Localizer (1.21+)", icon="⭐")
 bqm_page = st.Page("pages/3_bqm.py", title="Better Questing Localizer", icon="📖")
+translation_fixer_page = st.Page("pages/4_translation_fixer.py", title="Translation Fixer", icon="🛠️")
 
 pg = st.navigation(
     {
         "Main": [home_page],
         "FTB Quests": [ftbq_page, ftbq_new_page],
         "Better Questing": [bqm_page],
+        "Translation Fixer": [translation_fixer_page],
     },
     position='top'
 )

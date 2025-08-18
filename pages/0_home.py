@@ -3,9 +3,10 @@ from src.utils import Message
 
 st.title(Message("home_title").text)
 
-st.page_link("pages/1_ftbq.py", label="FTB Quests", icon="👑")
-st.page_link("pages/2_ftbq_new.py", label="FTB Quests (1.21+)", icon="⭐")
-st.page_link("pages/3_bqm.py", label="Better Questing", icon="📖")
+st.page_link("pages/1_ftbq.py", label=Message("ftbq_title").text, icon="👑")
+st.page_link("pages/2_ftbq_new.py", label=Message("ftbq_new_title").text, icon="⭐")
+st.page_link("pages/3_bqm.py", label=Message("bqm_title").text, icon="📖")
+st.page_link("pages/4_translation_fixer.py", label=Message("translation_fixer_title").text, icon="🛠️")
 
 st.divider()
 

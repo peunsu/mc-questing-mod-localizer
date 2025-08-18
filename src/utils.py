@@ -9,6 +9,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 
 from src.constants import MESSAGES
 
+@st.cache_data(ttl=3600)
 def read_file(file: BytesIO) -> str:
     try:
         return StringIO(file.getvalue().decode('utf-8')).read()
