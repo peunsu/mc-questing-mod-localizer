@@ -20,7 +20,7 @@ from src.utils import stqdm_asyncio, get_session_id
 from src.constants import MINECRAFT_TO_DEEPL, MINECRAFT_TO_GOOGLE
 
 class Translator:
-    def __init__(self):
+    def __init__(self):        
         self.logger = logging.getLogger(f"{self.__class__.__qualname__} ({get_session_id()})")
         self.logger.info("Initialized")
 
@@ -61,31 +61,28 @@ class Translator:
         return batches
     
     async def translate(self, source_lang_dict: dict, target_lang_dict: dict, target_lang: str, status):        
-        semaphore = asyncio.Semaphore(4)
-        
-        async def wrap_translate(batch):
-            async with semaphore:
-                await asyncio.sleep(2)
+        async def wrap_translate(idx, batch):
+            await asyncio.sleep(idx * 5) # 5 sec delay between requests
+            
+            task_name = asyncio.current_task().get_name()
+            try:
+                self.logger.info("Translating batch (%s)", task_name)
+                return await self._translate(batch, target_lang)
+            except Exception:
+                batch_keys = list(batch.keys())
+                batch_start = batch_keys[0] if batch_keys else None
+                batch_end = batch_keys[-1] if batch_keys else None
                 
-                task_name = asyncio.current_task().get_name()
-                try:
-                    self.logger.info("Translating batch (%s)", task_name)
-                    return await self._translate(batch, target_lang)
-                except Exception:
-                    batch_keys = list(batch.keys())
-                    batch_start = batch_keys[0] if batch_keys else None
-                    batch_end = batch_keys[-1] if batch_keys else None
-                    
-                    status.error(f"Translation failed for batch: `{batch_start}` ~ `{batch_end}`.")
-                    self.logger.error("Failed to translate batch (%s)", task_name, exc_info=True)
+                status.error(f"Translation failed for batch: `{batch_start}` ~ `{batch_end}`.")
+                self.logger.error("Failed to translate batch (%s)", task_name, exc_info=True)
 
-                    return batch
+                return batch
 
         # Flatten json
         source_lang_dict_flatten = flatten(source_lang_dict, separator="|")
         
         batches = self.make_batches(source_lang_dict_flatten, max_tokens=6000) # 6000 tokens max
-        batches_out = await stqdm_asyncio.gather(*[wrap_translate(batch) for batch in batches], desc="Progress", unit="batch", st_container=status, backend=False, frontend=True)
+        batches_out = await stqdm_asyncio.gather(*[wrap_translate(idx, batch) for idx, batch in enumerate(batches)], desc="Progress", unit="batch", st_container=status, backend=False, frontend=True)
 
         # Unflatten json
         result = {}
