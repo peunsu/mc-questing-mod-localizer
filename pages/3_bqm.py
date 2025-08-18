@@ -1,5 +1,4 @@
 import json
-import asyncio
 
 import streamlit as st
 
@@ -173,7 +172,7 @@ if button:
     if st.session_state.do_translate:
         Message("status_step_2", st_container=status).send()
         if source_lang_dict:
-            asyncio.run(translator.translate(source_lang_dict, target_lang_dict, target_lang, status))
+            st.session_state.loop.run_until_complete(translator.translate(source_lang_dict, target_lang_dict, target_lang, status))
 
     status.update(
         label = Message("status_done").text,

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import streamlit as st
 from streamlit_extras.buy_me_a_coffee import button
@@ -53,6 +54,13 @@ st.set_page_config(
             '''
         }
     )
+
+if 'loop' not in st.session_state:
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+    st.session_state.loop = loop
 
 if st.context.locale in ("ko-KR", "ko"):
     st.session_state.language = "ko-KR"

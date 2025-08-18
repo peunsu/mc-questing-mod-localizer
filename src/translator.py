@@ -21,7 +21,6 @@ from src.constants import MINECRAFT_TO_DEEPL, MINECRAFT_TO_GOOGLE
 
 class Translator:
     def __init__(self):
-        self.semaphore = asyncio.Semaphore(4)
         self.logger = logging.getLogger(f"{self.__class__.__qualname__} ({get_session_id()})")
         self.logger.info("Initialized")
 
@@ -62,8 +61,10 @@ class Translator:
         return batches
     
     async def translate(self, source_lang_dict: dict, target_lang_dict: dict, target_lang: str, status):        
+        semaphore = asyncio.Semaphore(4)
+        
         async def wrap_translate(batch):
-            async with self.semaphore:
+            async with semaphore:
                 await asyncio.sleep(2)
                 
                 task_name = asyncio.current_task().get_name()
