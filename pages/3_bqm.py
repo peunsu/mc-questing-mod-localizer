@@ -1,4 +1,5 @@
 import json
+import asyncio
 
 import streamlit as st
 
@@ -163,16 +164,25 @@ if button:
     source_lang_dict = lang_converter.convert_lang_to_json(read_file(lang_file)) if st.session_state.lang_exists else {}
     target_lang_dict = {}
     
-    if st.session_state.do_convert:
-        Message("status_step_1", st_container=status).send()
-        converter = BQMQuestConverter(modpack_name, quest_files)
-        converter.lang_dict.update(source_lang_dict)
-        converted_quest_arr, source_lang_dict = converter.convert()
-        
-    if st.session_state.do_translate:
-        Message("status_step_2", st_container=status).send()
-        if source_lang_dict:
-            st.session_state.loop.run_until_complete(translator.translate(source_lang_dict, target_lang_dict, target_lang, status))
+    try:
+        if st.session_state.do_convert:
+            Message("status_step_1", st_container=status).send()
+            converter = BQMQuestConverter(modpack_name, quest_files)
+            converter.lang_dict.update(source_lang_dict)
+            converted_quest_arr, source_lang_dict = converter.convert()
+            
+        if st.session_state.do_translate:
+            Message("status_step_2", st_container=status).send()
+            if source_lang_dict:
+                loop = asyncio.get_event_loop()
+                loop.run_until_complete(translator.translate(source_lang_dict, target_lang_dict, target_lang, status))
+    except Exception as e:
+        status.update(
+            label = Message("status_error").text,
+            state = "error"
+        )
+        status.error(f"An error occurred while localizing: {e}")
+        st.stop()
 
     status.update(
         label = Message("status_done").text,

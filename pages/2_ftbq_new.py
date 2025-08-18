@@ -1,3 +1,4 @@
+import asyncio
 import ftb_snbt_lib as slib
 
 import streamlit as st
@@ -98,7 +99,8 @@ if button:
             
         Message("status_step_2", st_container=status).send()
         if source_lang_dict:
-            st.session_state.loop.run_until_complete(translator.translate(source_lang_dict, target_lang_dict, target_lang, status))
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(translator.translate(source_lang_dict, target_lang_dict, target_lang, status))
     except Exception as e:
         status.update(
             label = Message("status_error").text,
