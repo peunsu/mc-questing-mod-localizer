@@ -203,13 +203,11 @@ class SNBTConverter(TypeConverter):
         output = slib.Compound()
         for key, value in data.items():
             if isinstance(value, str):
-                value = value.replace("\n", "\\n")
-                output[key] = slib.String(value)
+                output[key] = slib.String(value.replace("\n", "\\n"))
             elif isinstance(value, list):
                 output[key]  = slib.List([slib.String('')] * len(value))
                 for idx, val in enumerate(value):
-                    val = val.replace("\n", "\\n")
-                    output[key][idx] = slib.String(val)
+                    output[key][idx] = slib.String(val.replace("\n", "\\n"))
         self.logger.info("Converted JSON to SNBT")
         return output
 
