@@ -10,8 +10,6 @@ from zipfile import ZipFile
 from ftb_snbt_lib import tag
 from src.utils import read_file, get_session_id
 
-logger = logging.getLogger(__name__)
-
 class QuestConverter():
     def __init__(self, modpack_name: str, quest_arr: list[BytesIO]):
         self.logger = logging.getLogger(f"{self.__class__.__qualname__} ({get_session_id()})")
