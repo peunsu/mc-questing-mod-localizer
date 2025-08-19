@@ -2,6 +2,7 @@ import re
 import json
 import asyncio
 import logging
+from stqdm import stqdm
 from abc import abstractmethod
 from flatten_json import flatten, unflatten_list
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -61,9 +62,7 @@ class Translator:
         return batches
     
     async def translate(self, source_lang_dict: dict, target_lang_dict: dict, target_lang: str, status):        
-        async def wrap_translate(idx, batch):
-            await asyncio.sleep(idx * 5) # 5 sec delay between requests
-            
+        async def wrap_translate(batch):            
             task_name = asyncio.current_task().get_name()
             try:
                 self.logger.info("Translating batch (%s)", task_name)
@@ -82,7 +81,16 @@ class Translator:
         source_lang_dict_flatten = flatten(source_lang_dict, separator="|")
         
         batches = self.make_batches(source_lang_dict_flatten, max_tokens=6000) # 6000 tokens max
-        batches_out = await stqdm_asyncio.gather(*[wrap_translate(idx, batch) for idx, batch in enumerate(batches)], desc="Progress", unit="batch", st_container=status, backend=False, frontend=True)
+        
+        tasks = []
+        for batch in stqdm(batches, desc="Progress", unit="batch", st_container=status, backend=False, frontend=True):
+            self.logger.info("Creating task for batch")
+            task = asyncio.create_task(wrap_translate(batch))
+            tasks.append(task)
+            await asyncio.sleep(5)
+
+        batches_out = await asyncio.gather(*tasks)
+        #batches_out = await stqdm_asyncio.gather(*[wrap_translate(idx, batch) for idx, batch in enumerate(batches)], desc="Progress", unit="batch", st_container=status, backend=False, frontend=True)
 
         # Unflatten json
         result = {}
