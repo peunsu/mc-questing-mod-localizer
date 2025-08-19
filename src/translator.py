@@ -5,6 +5,7 @@ import logging
 from abc import abstractmethod
 from flatten_json import flatten, unflatten_list
 from tenacity import retry, stop_after_attempt, wait_exponential
+from json_repair import repair_json
 
 import googletrans
 import deepl
@@ -218,22 +219,14 @@ class GeminiTranslator(Translator):
                 end_block = text.rfind("}")
                 if start_block != -1 and end_block != -1 and start_block < end_block:
                     json_str = text[start_block:end_block+1]
-                    try:
-                        json.loads(json_str)
-                        return json_str
-                    except json.JSONDecodeError:
-                        pass
-            
+                    return repair_json(json_str)
+
             # find the last potential json string
             start = text.rfind('{')
             end = text.rfind('}')
             if start != -1 and end != -1 and start < end:
                 json_str = text[start:end+1]
-                try:
-                    json.loads(json_str)
-                    return json_str
-                except json.JSONDecodeError:
-                    raise ValueError("Invalid JSON format.")
+                return repair_json(json_str)
             elif text.strip() == '{}':
                 return "{}"
             else:
