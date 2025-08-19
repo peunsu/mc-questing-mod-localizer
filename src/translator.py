@@ -150,7 +150,8 @@ class DeepLTranslator(Translator):
                 batch_input_values.append(self._escape(value))
 
         if batch_input_values:
-            batch_output = self.translator.translate_text(
+            batch_output = await asyncio.to_thread(
+                self.translator.translate_text,
                 text=batch_input_values,
                 target_lang=MINECRAFT_TO_DEEPL[target_lang],
                 context="This is a Minecraft quest text, so please keep the color codes and formatting intact. Example of color codes: <a>, <b>, <1>, <2>, <l>, <r>. Example of formatting: <br>. Example Translation: <a>Hello <br><b>Minecraft! -> <a>안녕하세요 <br><b>마인크래프트!",

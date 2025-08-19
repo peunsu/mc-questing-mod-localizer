@@ -1,3 +1,4 @@
+import time
 import asyncio
 import ftb_snbt_lib as slib
 
@@ -82,10 +83,15 @@ with st.container(border=True):
 button = st.button(
     label = Message("start_button_label").text,
     type = "primary",
-    use_container_width = True
+    use_container_width = True,
+    key = "running",
+    disabled = st.session_state.get("running", False)
 )
 
-if button:    
+if button:
+    with st.spinner("Loading...", show_time=True):
+        time.sleep(3)
+    
     status = st.status(
         label = Message("status_in_progress").text,
         expanded = True
