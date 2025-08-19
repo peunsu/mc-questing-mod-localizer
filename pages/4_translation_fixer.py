@@ -1,3 +1,4 @@
+import time
 import json
 import asyncio
 import pandas as pd
@@ -108,14 +109,19 @@ with st.container(border=True):
         )
     
     selection = {key: data[key] for key in df.index[df_selection.selection.rows]}
-    
+
 button = st.button(
     label = Message("start_button_label").text,
     type = "primary",
-    use_container_width = True
+    use_container_width = True,
+    key = "running",
+    disabled = st.session_state.get("running", False)
 )
 
 if button:
+    with st.spinner("Loading...", show_time=True):
+        time.sleep(3)
+    
     status = st.status(
         label = Message("status_in_progress").text,
         expanded = True

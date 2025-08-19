@@ -1,6 +1,8 @@
 # Created by https://www.toptal.com/developers/gitignore/api/python,visualstudiocode,test
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,visualstudiocode,test
 
+.vscode/
+
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/
