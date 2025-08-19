@@ -62,7 +62,7 @@ class Translator:
     
     async def translate(self, source_lang_dict: dict, target_lang_dict: dict, target_lang: str, status):
         
-        semaphore = asyncio.Semaphore(2) # limit concurrent translations
+        semaphore = asyncio.Semaphore(4) # limit concurrent translations
         progress_bar = status.progress(0, "Translating...")
         
         async def wrap_translate(idx, total, batch):
@@ -72,8 +72,8 @@ class Translator:
                 await asyncio.sleep(5) # 5 sec delay
 
                 try:
-                    self.logger.info("Translating batch (%s)", task_name)
                     progress_bar.progress(idx / total, f"Translating... ({idx}/{total})")
+                    self.logger.info("Translating batch (%d/%d): %s", idx, total, task_name)
                     return await self._translate(batch, target_lang)
                 except Exception:
                     batch_keys = list(batch.keys())
@@ -81,7 +81,7 @@ class Translator:
                     batch_end = batch_keys[-1] if batch_keys else None
                     
                     status.error(f"Translation failed for batch: `{batch_start}` ~ `{batch_end}`.")
-                    self.logger.error("Failed to translate batch (%s)", task_name, exc_info=True)
+                    self.logger.error("Failed to translate batch (%d/%d): %s", idx, total, task_name, exc_info=True)
 
                     return batch
 
@@ -192,7 +192,7 @@ class GeminiTranslator(Translator):
             - &aDiamond Pickaxe&r -> &a다이아몬드 곡괭이&r
             - &aNetherite Sword&r -> &a네더라이트 검&r
             - While the &aUpgrade Template&r is not needed to make the initial tool, it will save you a lot of &6Allthemodium Ingots&r! -> &a업그레이드 템플릿&r은 초기 도구를 만드는 데 필요하지 않지만, &6올더모듐 주괴&r를 많이 절약할 수 있습니다!
-            Format instructions: {format_instructions}
+            Your output must follow these format instructions: {format_instructions}
             Translate the following JSON-formatted text to {target_lang}:
             ```json
             {query}
