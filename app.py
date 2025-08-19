@@ -1,11 +1,9 @@
+import asyncio
 import logging
-import nest_asyncio
 import streamlit as st
 from streamlit_extras.buy_me_a_coffee import button
 
 from src.utils import get_session_id, Message
-
-nest_asyncio.apply()
 
 logging.basicConfig(
     level=logging.INFO,
@@ -90,6 +88,15 @@ with st.sidebar:
         help = Message("gemini_key_help").text
     )
     Message("api_key_caption").caption()
+
+if "tasks" not in st.session_state:
+    st.session_state.tasks = {}
+
+try:
+    st.session_state.loop = asyncio.get_running_loop()
+except RuntimeError:
+    st.session_state.loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(st.session_state.loop)
     
 button(username="peunsu")
 

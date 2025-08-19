@@ -1,3 +1,5 @@
+import hashlib
+import asyncio
 from io import StringIO, BytesIO
 from tqdm.asyncio import tqdm_asyncio
 
@@ -43,6 +45,21 @@ def check_gemini_key(auth_key: str) -> bool:
         return True
     except:
         return False
+
+def schedule_task(key, coro):
+    """Schedules an async task and stores it with a unique key."""
+    if key not in st.session_state.tasks:
+        st.session_state.tasks[key] = st.session_state.loop.create_task(coro)
+
+def process_tasks():
+    """Process pending tasks on the event loop."""
+    pending = [task for task in st.session_state.tasks.values() if not task.done()]
+    if pending:
+        st.session_state.loop.run_until_complete(asyncio.gather(*pending))
+
+def generate_task_key(*args):
+    """Generate a unique hash-based key for a task."""
+    return hashlib.sha256("-".join(map(str, args)).encode()).hexdigest()
 
 class Message:
     message: str

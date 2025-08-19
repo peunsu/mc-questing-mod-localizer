@@ -1,6 +1,5 @@
 import time
 import json
-import asyncio
 import pandas as pd
 import streamlit as st
 import ftb_snbt_lib as slib
@@ -8,7 +7,7 @@ import ftb_snbt_lib as slib
 from src.constants import MINECRAFT_LANGUAGES, MINECRAFT_TO_GOOGLE, MINECRAFT_TO_DEEPL
 from src.converter import SNBTConverter
 from src.translator import GoogleTranslator, DeepLTranslator, GeminiTranslator
-from src.utils import Message, read_file, check_deepl_key, check_gemini_key
+from src.utils import Message, read_file, check_deepl_key, check_gemini_key, generate_task_key, schedule_task, process_tasks
 
 Message("translation_fixer_title").title()
 st.page_link(
@@ -128,8 +127,12 @@ if button:
     )
     
     try:
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(translator.translate(selection, data, target_lang, status))
+        task_key = f"task-{generate_task_key(time.time())}"
+        schedule_task(
+            task_key,
+            translator.translate(source_lang_dict, target_lang_dict, target_lang, status)
+        )
+        process_tasks()
     except Exception as e:
         status.update(
             label = Message("status_error").text,
@@ -137,6 +140,8 @@ if button:
         )
         status.error(f"An error occurred while localizing: {e}")
         st.stop()
+    finally:
+        del st.session_state.tasks[task_key]
     
     status.update(
         label = Message("status_done").text,

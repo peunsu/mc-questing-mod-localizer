@@ -1,6 +1,5 @@
 import time
 import json
-import asyncio
 from tempfile import TemporaryDirectory
 
 import streamlit as st
@@ -8,7 +7,7 @@ import streamlit as st
 from src.constants import MINECRAFT_LANGUAGES, MINECRAFT_TO_GOOGLE, MINECRAFT_TO_DEEPL
 from src.converter import FTBQuestConverter
 from src.translator import GoogleTranslator, DeepLTranslator, GeminiTranslator
-from src.utils import Message, read_file, check_deepl_key, check_gemini_key
+from src.utils import Message, read_file, check_deepl_key, check_gemini_key, generate_task_key, schedule_task, process_tasks
 
 Message("ftbq_title").title()
 st.page_link(
@@ -178,8 +177,12 @@ if button:
         if st.session_state.do_translate:
             Message("status_step_2", st_container=status).send()
             if source_lang_dict:
-                loop = asyncio.get_event_loop()
-                loop.run_until_complete(translator.translate(source_lang_dict, target_lang_dict, target_lang, status))
+                task_key = f"task-{generate_task_key(time.time())}"
+                schedule_task(
+                    task_key,
+                    translator.translate(source_lang_dict, target_lang_dict, target_lang, status)
+                )
+                process_tasks()
     except Exception as e:
         status.update(
             label = Message("status_error").text,
@@ -187,7 +190,9 @@ if button:
         )
         status.error(f"An error occurred while localizing: {e}")
         st.stop()
-
+    finally:
+        del st.session_state.tasks[task_key]
+    
     status.update(
         label = Message("status_done").text,
         state = "complete",
