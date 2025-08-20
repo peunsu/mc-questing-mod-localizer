@@ -14,6 +14,10 @@ This application supports [FTB Quests](https://www.curseforge.com/minecraft/mc-m
 ```bash
 $ git clone https://github.com/peunsu/mc-questing-mod-localizer
 ```
+* Change directory:
+```bash
+$ cd mc-questing-mod-localizer
+```
 * Create the virtual environment (optional):
 ```bash
 $ python -m venv venv
