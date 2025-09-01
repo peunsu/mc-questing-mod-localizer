@@ -1,3 +1,4 @@
+import copy
 import time
 import ftb_snbt_lib as slib
 
@@ -100,7 +101,7 @@ if button:
         Message("status_step_1", st_container=status).send()
         snbt_converter = SNBTConverter()
         source_lang_dict = snbt_converter.convert_snbt_to_json(slib.loads(read_file(lang_file)))
-        target_lang_dict = {}
+        target_lang_dict = copy.deepcopy(source_lang_dict)
             
         Message("status_step_2", st_container=status).send()
         if source_lang_dict:

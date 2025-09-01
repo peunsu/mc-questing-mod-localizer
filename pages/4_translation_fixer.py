@@ -130,7 +130,7 @@ if button:
         task_key = f"task-{generate_task_key(time.time())}"
         schedule_task(
             task_key,
-            translator.translate(source_lang_dict, target_lang_dict, target_lang, status)
+            translator.translate(selection, data, target_lang, status)
         )
         process_tasks()
     except Exception as e:

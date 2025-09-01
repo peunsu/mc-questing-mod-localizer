@@ -1,3 +1,4 @@
+import copy
 import time
 import json
 
@@ -170,7 +171,7 @@ if button:
 
     lang_converter = LANGConverter()
     source_lang_dict = lang_converter.convert_lang_to_json(read_file(lang_file)) if st.session_state.lang_exists else {}
-    target_lang_dict = {}
+    target_lang_dict = copy.deepcopy(source_lang_dict)
     
     try:
         if st.session_state.do_convert:
