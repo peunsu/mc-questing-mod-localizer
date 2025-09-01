@@ -1,3 +1,4 @@
+import copy
 import time
 import json
 from tempfile import TemporaryDirectory
@@ -165,7 +166,7 @@ if button:
     )
 
     source_lang_dict = json.loads(read_file(lang_file)) if st.session_state.lang_exists else {}
-    target_lang_dict = {}
+    target_lang_dict = copy.deepcopy(source_lang_dict)
     
     try:
         if st.session_state.do_convert:

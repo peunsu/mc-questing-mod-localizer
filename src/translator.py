@@ -99,8 +99,16 @@ class Translator:
         for out in batches_out:
             result.update(out)
         result = unflatten_list(result, separator="|")
-        
-        target_lang_dict.update(result)
+
+        # Update target_lang_dict only for existing keys
+        for key in result.keys():
+            if source_lang_dict.get(key) is None:
+                continue
+            if isinstance(source_lang_dict[key], list):
+                if not isinstance(result[key], list) or len(source_lang_dict[key]) != len(result[key]):
+                    continue
+            target_lang_dict[key] = result[key]
+
         progress_bar.empty()
         self.logger.info("Translated %d batches", len(batches_out))
 
@@ -191,7 +199,7 @@ class GeminiTranslator(Translator):
             If there are words that are difficult or ambiguous to translate, translate them PHONETICALLY. Also, translate proper nouns PHONETICALLY.
             Translation Examples (en_us -> ko_kr):
             - &aDiamond Pickaxe&r -> &a다이아몬드 곡괭이&r
-            - &aNetherite Sword&r -> &a네더라이트 검&r
+            - {{@pagebreak}} -> {{@pagebreak}}
             - While the &aUpgrade Template&r is not needed to make the initial tool, it will save you a lot of &6Allthemodium Ingots&r! -> &a업그레이드 템플릿&r은 초기 도구를 만드는 데 필요하지 않지만, &6올더모듐 주괴&r를 많이 절약할 수 있습니다!
             Your output must follow these format instructions: {format_instructions}
             Translate the following JSON-formatted text to {target_lang}:
