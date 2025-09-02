@@ -123,8 +123,7 @@ if button:
 
     status.update(
         label = Message("status_done").text,
-        state = "complete",
-        expanded = False
+        state = "complete"
     )
     
     with st.container(border=True):

@@ -62,55 +62,51 @@ class Translator:
         return batches
     
     async def translate(self, source_lang_dict: dict, target_lang_dict: dict, target_lang: str, status):
-        
         semaphore = asyncio.Semaphore(4) # limit concurrent translations
         progress_bar = status.progress(0, "Translating...")
         
         async def wrap_translate(idx, total, batch):
-            task_name = asyncio.current_task().get_name()
-            
             async with semaphore:
                 await asyncio.sleep(5) # 5 sec delay
 
                 try:
                     progress_bar.progress(idx / total, f"Translating... ({idx}/{total})")
-                    self.logger.info("Translating batch (%d/%d): %s", idx, total, task_name)
+                    self.logger.info("Translating batch (%d/%d)", idx, total)
                     return await self._translate(batch, target_lang)
                 except Exception:
-                    batch_keys = list(batch.keys())
-                    batch_start = batch_keys[0] if batch_keys else None
-                    batch_end = batch_keys[-1] if batch_keys else None
-                    
-                    status.error(f"Translation failed for batch: `{batch_start}` ~ `{batch_end}`.")
-                    self.logger.error("Failed to translate batch (%d/%d): %s", idx, total, task_name, exc_info=True)
+                    self.logger.error("Failed to translate batch (%d/%d)", idx, total, exc_info=True)
+                    return {} # return empty dict on failure
 
-                    return batch
-
-        # Flatten json
-        source_lang_dict_flatten = flatten(source_lang_dict, separator="|")
-        
+        source_lang_dict_flatten = flatten(source_lang_dict, separator="|") # Flatten json
         batches = self.make_batches(source_lang_dict_flatten, max_tokens=6000) # 6000 tokens max
         
         tasks = [wrap_translate(idx, len(batches), batch) for idx, batch in enumerate(batches, start=1)]
         batches_out = await asyncio.gather(*tasks)
+        
+        progress_bar.empty()
+        self.logger.info("Translated %d batches", len(batches_out))
 
-        # Unflatten json
         result = {}
         for out in batches_out:
             result.update(out)
-        result = unflatten_list(result, separator="|")
+        result = unflatten_list(result, separator="|") # Unflatten json
+        self.logger.info("Gathered translated results")
 
-        # Update target_lang_dict only for existing keys
-        for key in result.keys():
-            if source_lang_dict.get(key) is None:
+        error_log = []
+        for key in source_lang_dict.keys():
+            if result.get(key) is None: # Missing key
+                error_log.append(f"Missing translation: {key}")
                 continue
-            if isinstance(source_lang_dict[key], list):
+            if isinstance(source_lang_dict[key], list): # Invalid list length
                 if not isinstance(result[key], list) or len(source_lang_dict[key]) != len(result[key]):
+                    error_log.append(f"Invalid translation: {key}")
                     continue
-            target_lang_dict[key] = result[key]
-
-        progress_bar.empty()
-        self.logger.info("Translated %d batches", len(batches_out))
+            target_lang_dict[key] = result[key] # Update target_lang_dict only for valid keys
+        self.logger.info("Updated target language dictionary")
+        
+        if error_log:
+            status.write('**Error Log**')
+            status.code('\n'.join(error_log), language=None, line_numbers=True, height=300)
 
     @abstractmethod
     async def _translate(self, batch: str, target_lang: str) -> dict:
